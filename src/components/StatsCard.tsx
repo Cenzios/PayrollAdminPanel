@@ -34,7 +34,7 @@ const StatsCard = ({
           {title}
         </p>
         <div className="flex items-baseline justify-between -mt-1">
-          <h3 className="text-3xl font-extrabold text-[#111827] tracking-tight">{value}</h3>
+          <h3 className="text-3xl font-bold text-gray-800 tracking-tight">{value}</h3>
 
           {trend && (
             <div className={`flex items-center space-x-1 py-1 px-2 rounded-full text-[10px] font-bold ${trend.isUp ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>

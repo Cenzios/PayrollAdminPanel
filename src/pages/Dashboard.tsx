@@ -61,7 +61,7 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
     <div className="space-y-8 animate-in fade-in duration-500">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-4xl font-extrabold text-[#111827] tracking-tight">Overview</h1>
+          <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Overview</h1>
           <p className="text-gray-500 font-medium mt-1">{userRole}</p>
         </div>
         <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
@@ -88,7 +88,7 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
         />
         <StatsCard
           title="MONTHLY INCOME"
-          value={`RS: ${stats.monthlyRevenue.toLocaleString()}`}
+          value={`${stats.monthlyRevenue.toLocaleString()}`}
           icon={DollarSign}
           iconBgColor="bg-[#f0fdf4]"
           iconColor="text-[#22c55e]"
