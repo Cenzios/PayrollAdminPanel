@@ -1,14 +1,13 @@
-import { createSlice, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import api from '../utils/axios';
 
 interface DashboardStats {
+  totalUsers: number;
+  activeSubscriptions: number;
   totalCompanies: number;
-  totalCompaniesChange: number;
-  monthlyIncome: number;
-  monthlyIncomeChange: number;
-  expiredCompanies: number;
-  expiredCompaniesChange: number;
-  totalIncome: number;
-  totalIncomeChange: number;
+  totalEmployees: number;
+  monthlyRevenue: number;
+  suspiciousLogins: number;
 }
 
 interface ChartDataPoint {
@@ -20,35 +19,39 @@ interface DashboardState {
   stats: DashboardStats;
   chartData: ChartDataPoint[];
   userRole: string;
+  isLoading: boolean;
+  error: string | null;
 }
 
 const initialState: DashboardState = {
   stats: {
-    totalCompanies: 5420,
-    totalCompaniesChange: 55,
-    monthlyIncome: 300098,
-    monthlyIncomeChange: 2.5,
-    expiredCompanies: 123,
-    expiredCompaniesChange: -20,
-    totalIncome: 123,
-    totalIncomeChange: 2.5,
+    totalUsers: 0,
+    activeSubscriptions: 0,
+    totalCompanies: 0,
+    totalEmployees: 0,
+    monthlyRevenue: 0,
+    suspiciousLogins: 0,
   },
-  chartData: [
-    { month: 'Jan', value: 1200 },
-    { month: 'Feb', value: 1900 },
-    { month: 'Mar', value: 2800 },
-    { month: 'Apr', value: 3100 },
-    { month: 'May', value: 3400 },
-    { month: 'Jun', value: 3800 },
-    { month: 'Jul', value: 4200 },
-    { month: 'Aug', value: 4600 },
-    { month: 'Sep', value: 4800 },
-    { month: 'Oct', value: 5100 },
-    { month: 'Nov', value: 5200 },
-    { month: 'Dec', value: 5300 },
-  ],
+  chartData: [],
   userRole: 'System Administrator',
+  isLoading: false,
+  error: null,
 };
+
+export const fetchDashboardStats = createAsyncThunk(
+  'dashboard/fetchStats',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await api.get('/admin/dashboard/summary');
+      if (response.data.success) {
+        return response.data.data;
+      }
+      return rejectWithValue('Failed to fetch stats');
+    } catch (err: any) {
+      return rejectWithValue(err.response?.data?.message || 'Failed to fetch stats');
+    }
+  }
+);
 
 const dashboardSlice = createSlice({
   name: 'dashboard',
@@ -60,6 +63,28 @@ const dashboardSlice = createSlice({
     updateChartData: (state, action: PayloadAction<ChartDataPoint[]>) => {
       state.chartData = action.payload;
     },
+  },
+  extraReducers: (builder) => {
+    builder
+      .addCase(fetchDashboardStats.pending, (state) => {
+        state.isLoading = true;
+      })
+      .addCase(fetchDashboardStats.fulfilled, (state, action: PayloadAction<any>) => {
+        state.isLoading = false;
+        state.stats = {
+          totalUsers: action.payload.totalUsers,
+          activeSubscriptions: action.payload.activeSubscriptions,
+          totalCompanies: action.payload.totalCompanies,
+          totalEmployees: action.payload.totalEmployees,
+          monthlyRevenue: action.payload.monthlyRevenue,
+          suspiciousLogins: action.payload.suspiciousLogins,
+        };
+        state.chartData = action.payload.chartData;
+      })
+      .addCase(fetchDashboardStats.rejected, (state, action: PayloadAction<any>) => {
+        state.isLoading = false;
+        state.error = action.payload;
+      });
   },
 });
 

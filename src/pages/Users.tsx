@@ -1,14 +1,22 @@
 import { Search, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
-import { demoUsers } from '../utils/demoData';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { fetchUsers } from '../store/userSlice';
 
 const Users = () => {
+  const dispatch = useAppDispatch();
+  const { users, totalUsers } = useAppSelector((state) => state.users);
   const [searchTerm, setSearchTerm] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [currentPage, setCurrentPage] = useState(1);
 
-  const filteredUsers = demoUsers.filter(user =>
-    user.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    user.email.toLowerCase().includes(searchTerm.toLowerCase())
+  useEffect(() => {
+    dispatch(fetchUsers({ page: currentPage, limit: rowsPerPage }));
+  }, [dispatch, currentPage, rowsPerPage]);
+
+  const filteredUsers = users.filter(user =>
+    (user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
+    (user.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
   );
 
   return (
@@ -23,7 +31,7 @@ const Users = () => {
           <div className="flex items-center space-x-2">
             <h2 className="text-lg font-semibold text-gray-800">Registered Users</h2>
             <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-0.5 rounded-full">
-              {filteredUsers.length} users
+              {totalUsers} users
             </span>
           </div>
 
@@ -97,28 +105,39 @@ const Users = () => {
               <option value={50}>50</option>
             </select>
             <span className="text-sm text-gray-500">
-              1-20 of 94
+              {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalUsers)} of {totalUsers}
             </span>
           </div>
 
           <div className="flex items-center space-x-2">
-            <button className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:bg-gray-50 transition-colors">
+            <button
+              disabled={currentPage === 1}
+              onClick={() => setCurrentPage(prev => prev - 1)}
+              className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
               <ChevronLeft size={18} />
             </button>
             <div className="flex items-center space-x-1">
-              {[1, 2, 3, '...', 8, 9, 10].map((page, i) => (
-                <button
-                  key={i}
-                  className={`px-3 py-1 rounded-lg text-sm transition-colors ${page === 2
-                    ? 'bg-blue-50 text-blue-600 font-semibold'
-                    : 'text-gray-500 hover:bg-gray-50'
-                    }`}
-                >
-                  {page}
-                </button>
-              ))}
+              {Array.from({ length: Math.ceil(totalUsers / rowsPerPage) }, (_, i) => i + 1)
+                .slice(Math.max(0, currentPage - 3), Math.min(Math.ceil(totalUsers / rowsPerPage), currentPage + 2))
+                .map((page) => (
+                  <button
+                    key={page}
+                    onClick={() => setCurrentPage(page)}
+                    className={`px-3 py-1 rounded-lg text-sm transition-colors ${page === currentPage
+                      ? 'bg-blue-50 text-blue-600 font-semibold'
+                      : 'text-gray-500 hover:bg-gray-50'
+                      }`}
+                  >
+                    {page}
+                  </button>
+                ))}
             </div>
-            <button className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:bg-gray-50 transition-colors">
+            <button
+              disabled={currentPage >= Math.ceil(totalUsers / rowsPerPage)}
+              onClick={() => setCurrentPage(prev => prev + 1)}
+              className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
+            >
               <ChevronRight size={18} />
             </button>
           </div>
