@@ -1,4 +1,4 @@
-import { Search, MessageSquare, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, MessageSquare, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchUsers } from '../store/userSlice';
@@ -9,6 +9,7 @@ const Users = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
+  const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
   useEffect(() => {
     dispatch(fetchUsers({ page: currentPage, limit: rowsPerPage }));
@@ -18,6 +19,21 @@ const Users = () => {
     (user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
     (user.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
   );
+
+  const getStatusStyles = (status: string) => {
+    switch (status) {
+      case 'ACTIVE':
+        return 'bg-green-50 text-green-600 border-green-100';
+      case 'PENDING_ACTIVATION':
+        return 'bg-blue-50 text-blue-600 border-blue-100';
+      case 'EXPIRED':
+        return 'bg-red-50 text-red-600 border-red-100';
+      case 'CANCELLED':
+        return 'bg-gray-50 text-gray-600 border-gray-100';
+      default:
+        return 'bg-gray-50 text-gray-600 border-gray-100';
+    }
+  };
 
   return (
     <div className="space-y-6">
@@ -51,10 +67,13 @@ const Users = () => {
           <table className="w-full text-left">
             <thead>
               <tr className="bg-gray-50/50 text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                <th className="px-6 py-4">Company</th>
+                <th className="px-6 py-4">User Name</th>
                 <th className="px-6 py-4 text-center">No. of companies</th>
                 <th className="px-6 py-4 text-center">No. of employees</th>
+                <th className="px-6 py-4">Subscription Plan</th>
                 <th className="px-6 py-4 text-center">Message</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
@@ -63,7 +82,7 @@ const Users = () => {
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
-                        {user.fullName.split(' ').map(n => n[0]).join('')}
+                        {user.fullName?.split(' ').map(n => n[0]).join('')}
                       </div>
                       <div>
                         <div className="text-sm font-semibold text-gray-900">{user.fullName}</div>
@@ -81,10 +100,38 @@ const Users = () => {
                       {user.employeeCount}
                     </span>
                   </td>
+                  <td className="px-6 py-4">
+                    <span className="text-sm text-gray-600 font-medium">
+                      {user.currentPlan}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 text-center">
                     <button className="text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50">
                       <MessageSquare size={18} />
                     </button>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(user.subscriptionStatus || '')}`}>
+                      {user.subscriptionStatus}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-center">
+                    <div className="relative">
+                      <button
+                        onClick={() => setActiveMenuId(activeMenuId === user.id ? null : user.id)}
+                        className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
+                      >
+                        <MoreVertical size={18} />
+                      </button>
+
+                      {activeMenuId === user.id && (
+                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10">
+                          <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">View Details</button>
+                          <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Edit User</button>
+                          <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Suspend User</button>
+                        </div>
+                      )}
+                    </div>
                   </td>
                 </tr>
               ))}
@@ -143,6 +190,14 @@ const Users = () => {
           </div>
         </div>
       </div>
+
+      {/* Click outside to close menu backdrop */}
+      {activeMenuId && (
+        <div
+          className="fixed inset-0 z-0"
+          onClick={() => setActiveMenuId(null)}
+        />
+      )}
     </div>
   );
 };

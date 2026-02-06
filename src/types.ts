@@ -11,6 +11,8 @@ export interface User {
   createdAt: string;
   companyCount?: number;
   employeeCount?: number;
+  currentPlan?: string;
+  subscriptionStatus?: SubscriptionStatus;
 }
 
 export interface Company {
@@ -19,12 +21,10 @@ export interface Company {
   email: string;
   address: string;
   contactNumber: string;
-  departments: string[];
-  ownerId: string;
-  employeesCount: number;
-  subscriptionPlan: string;
-  status: 'Active' | 'Inactive' | 'Trial';
   createdAt: string;
+  ownerName: string;
+  employeeCount: number;
+  subscriptionPlan: string;
 }
 
 export interface Plan {

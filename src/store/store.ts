@@ -3,6 +3,7 @@ import dashboardReducer from './dashboardSlice';
 import subscriptionReducer from './subscriptionSlice';
 import authReducer from './authSlice';
 import userReducer from './userSlice';
+import companyReducer from './companySlice';
 
 export const store = configureStore({
   reducer: {
@@ -10,6 +11,7 @@ export const store = configureStore({
     subscription: subscriptionReducer,
     auth: authReducer,
     users: userReducer,
+    companies: companyReducer,
   },
 });
 
