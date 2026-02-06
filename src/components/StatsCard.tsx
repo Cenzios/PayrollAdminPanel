@@ -3,8 +3,11 @@ import { LucideIcon, TrendingUp, TrendingDown } from 'lucide-react';
 interface StatsCardProps {
   title: string;
   value: string | number;
-  change?: number;
-  changeLabel?: string;
+  trend?: {
+    value: number;
+    isUp: boolean;
+    label: string;
+  };
   icon: LucideIcon;
   iconBgColor: string;
   iconColor: string;
@@ -13,43 +16,35 @@ interface StatsCardProps {
 const StatsCard = ({
   title,
   value,
-  change,
-  changeLabel,
+  trend,
   icon: Icon,
   iconBgColor,
   iconColor,
 }: StatsCardProps) => {
-  const isPositive = change !== undefined ? change >= 0 : true;
-
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-shadow">
-      <div className="flex items-start justify-between mb-4">
-        <div className={`${iconBgColor} p-3 rounded-lg`}>
+    <div className="bg-white rounded-3xl p-6 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 group">
+      <div className="flex items-start justify-between mb-6">
+        <div className={`${iconBgColor} p-3 rounded-2xl group-hover:scale-110 transition-transform duration-300`}>
           <Icon className={iconColor} size={24} />
         </div>
       </div>
 
-      <div className="space-y-2">
-        <p className="text-sm text-gray-500 uppercase tracking-wide font-medium">
+      <div className="space-y-1">
+        <p className="text-[11px] text-gray-400 uppercase tracking-[0.1em] font-bold">
           {title}
         </p>
-        <div className="flex items-end justify-between">
-          <h3 className="text-3xl font-bold text-gray-900">{value}</h3>
-          {change !== undefined && changeLabel !== undefined && (
-            <div className="flex items-center space-x-1">
-              {isPositive ? (
-                <TrendingUp className="text-green-600" size={16} />
+        <div className="flex items-baseline justify-between -mt-1">
+          <h3 className="text-3xl font-extrabold text-[#111827] tracking-tight">{value}</h3>
+
+          {trend && (
+            <div className={`flex items-center space-x-1 py-1 px-2 rounded-full text-[10px] font-bold ${trend.isUp ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'}`}>
+              {trend.isUp ? (
+                <TrendingUp size={12} className="stroke-[3]" />
               ) : (
-                <TrendingDown className="text-red-600" size={16} />
+                <TrendingDown size={12} className="stroke-[3]" />
               )}
-              <span
-                className={`text-sm font-semibold ${isPositive ? 'text-green-600' : 'text-red-600'
-                  }`}
-              >
-                {Math.abs(change)}
-                {changeLabel.includes('%') ? '%' : ''}
-              </span>
-              <span className="text-xs text-gray-500 ml-1">{changeLabel}</span>
+              <span>{trend.value}%</span>
+              <span className="text-gray-400 font-medium ml-1">{trend.label}</span>
             </div>
           )}
         </div>

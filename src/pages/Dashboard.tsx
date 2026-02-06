@@ -12,100 +12,158 @@ interface DashboardProps {
 
 const Dashboard = ({ onNavigate }: DashboardProps) => {
   const dispatch = useAppDispatch();
-  const { stats, chartData, userRole } = useAppSelector((state) => state.dashboard);
+  const { stats, chartData, recentActivities, userRole } = useAppSelector((state) => state.dashboard);
 
   useEffect(() => {
     dispatch(fetchDashboardStats());
   }, [dispatch]);
 
+  const formatTime = (dateString: string) => {
+    const now = new Date();
+    const past = new Date(dateString);
+    const diffInMs = now.getTime() - past.getTime();
+    const diffInMins = Math.floor(diffInMs / (1000 * 60));
+    const diffInHours = Math.floor(diffInMs / (1000 * 60 * 60));
+    const diffInDays = Math.floor(diffInMs / (1000 * 60 * 60 * 24));
+
+    if (diffInMins < 1) return 'just now';
+    if (diffInMins < 60) return `${diffInMins} mins ago`;
+    if (diffInHours < 24) return `${diffInHours} hours ago`;
+    return `${diffInDays} days ago`;
+  };
+
+  const getActivityDescription = (activity: any) => {
+    switch (activity.action) {
+      case 'CREATE_USER':
+        return `New User registered: ${activity.userName}`;
+      case 'CREATE_COMPANY':
+        return `New company registered: ${activity.userName}`;
+      case 'CREATE_EMPLOYEE':
+        return `New employee added by ${activity.userName}`;
+      case 'UPDATE_SALARY':
+        return `Salary calculated by ${activity.userName}`;
+      case 'CREATE_SUBSCRIPTION':
+        return `New subscription purchased by ${activity.userName}`;
+      default:
+        return `${activity.action.replace('_', ' ')} by ${activity.userName}`;
+    }
+  };
+
+  const getActivityIcon = (action: string) => {
+    if (action.includes('USER')) return Users;
+    if (action.includes('COMPANY')) return Building2;
+    if (action.includes('EMPLOYEE')) return Users;
+    if (action.includes('SALARY')) return DollarSign;
+    return AlertCircle;
+  };
+
   return (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-2">Overview</h1>
-        <p className="text-gray-600">{userRole}</p>
-      </div>
-
-      <div>
-        <h2 className="text-xl font-semibold text-gray-900 mb-4">
-          Performance Summary
-        </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          <StatsCard
-            title="Total Users"
-            value={stats.totalUsers.toLocaleString()}
-            icon={Users}
-            iconBgColor="bg-blue-100"
-            iconColor="text-blue-600"
-          />
-          <StatsCard
-            title="Active Subscriptions"
-            value={stats.activeSubscriptions.toLocaleString()}
-            icon={FileText}
-            iconBgColor="bg-green-100"
-            iconColor="text-green-600"
-          />
-          <StatsCard
-            title="Total Companies"
-            value={stats.totalCompanies.toLocaleString()}
-            icon={Building2}
-            iconBgColor="bg-teal-100"
-            iconColor="text-teal-600"
-          />
-          <StatsCard
-            title="Total Employees"
-            value={stats.totalEmployees.toLocaleString()}
-            icon={Building}
-            iconBgColor="bg-indigo-100"
-            iconColor="text-indigo-600"
-          />
-          <StatsCard
-            title="Monthly Revenue"
-            value={`RS: ${stats.monthlyRevenue.toLocaleString()}`}
-            icon={DollarSign}
-            iconBgColor="bg-purple-100"
-            iconColor="text-purple-600"
-          />
-          <StatsCard
-            title="Suspicious Logins"
-            value={stats.suspiciousLogins.toLocaleString()}
-            icon={AlertCircle}
-            iconBgColor="bg-red-100"
-            iconColor="text-red-600"
-          />
+    <div className="space-y-8 animate-in fade-in duration-500">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-4xl font-extrabold text-[#111827] tracking-tight">Overview</h1>
+          <p className="text-gray-500 font-medium mt-1">{userRole}</p>
+        </div>
+        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
+          <Users className="text-blue-600" size={24} />
         </div>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Chart data={chartData} title="Monthly User Registrations" />
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <StatsCard
+          title="ACTIVE USERS"
+          value={stats.activeUsers.toLocaleString()}
+          icon={Users}
+          iconBgColor="bg-[#fdf2f2]"
+          iconColor="text-[#ef4444]"
+          trend={{ value: 20, isUp: false, label: 'This week' }}
+        />
+        <StatsCard
+          title="TOTAL COMPANIES"
+          value={stats.totalCompanies.toLocaleString()}
+          icon={Building2}
+          iconBgColor="bg-[#f0f9ff]"
+          iconColor="text-[#0ea5e9]"
+          trend={{ value: 55, isUp: true, label: 'This week' }}
+        />
+        <StatsCard
+          title="MONTHLY INCOME"
+          value={`RS: ${stats.monthlyRevenue.toLocaleString()}`}
+          icon={DollarSign}
+          iconBgColor="bg-[#f0fdf4]"
+          iconColor="text-[#22c55e]"
+          trend={{ value: 25, isUp: true, label: 'This week' }}
+        />
+        <StatsCard
+          title="TOTAL INCOME"
+          value={stats.totalIncome.toLocaleString()}
+          icon={DollarSign}
+          iconBgColor="bg-[#fffbeb]"
+          iconColor="text-[#f59e0b]"
+          trend={{ value: 12, isUp: true, label: 'This month' }}
+        />
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
+        <div className="lg:col-span-3">
+          <Chart data={chartData} title="User Registrations" />
         </div>
 
-        <div className="space-y-4">
-          <QuickActionCard
-            title="View Users"
-            subtitle="Payroll Users"
-            icon={Users}
-            iconBgColor="bg-blue-100"
-            iconColor="text-blue-600"
-            onClick={() => onNavigate('users')}
-          />
-          <QuickActionCard
-            title="View Companies"
-            subtitle="Registered Companies"
-            icon={Building}
-            iconBgColor="bg-teal-100"
-            iconColor="text-teal-600"
-            onClick={() => onNavigate('company')}
-          />
-          <QuickActionCard
-            title="Edit Plans"
-            subtitle="Edit Subscription Plans"
-            icon={DollarSign}
-            iconBgColor="bg-purple-100"
-            iconColor="text-purple-600"
-            onClick={() => onNavigate('subscriptions')}
-          />
+        <div className="lg:col-span-2 space-y-4">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-full">
+            <div className="p-6 border-b border-gray-50 bg-white sticky top-0">
+              <h3 className="text-lg font-bold text-gray-800">Recent Activities</h3>
+            </div>
+            <div className="flex-1 overflow-y-auto max-h-[400px]">
+              {recentActivities.map((activity, index) => {
+                const Icon = getActivityIcon(activity.action);
+                return (
+                  <div key={activity.id} className={`p-5 flex items-start space-x-4 hover:bg-gray-50 transition-colors ${index !== recentActivities.length - 1 ? 'border-b border-gray-50' : ''}`}>
+                    <div className="w-10 h-10 rounded-xl bg-blue-50 flex-shrink-0 flex items-center justify-center">
+                      <Icon className="text-blue-600" size={18} />
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm font-medium text-gray-900 leading-snug">
+                        {getActivityDescription(activity)}
+                      </p>
+                      <p className="text-xs text-gray-400 mt-1">{formatTime(activity.createdAt)}</p>
+                    </div>
+                  </div>
+                );
+              })}
+              {recentActivities.length === 0 && (
+                <div className="p-10 text-center text-gray-400">No recent activities</div>
+              )}
+            </div>
+          </div>
         </div>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+        <QuickActionCard
+          title="View Users"
+          subtitle="Payroll Users"
+          icon={Users}
+          iconBgColor="bg-blue-50"
+          iconColor="text-blue-600"
+          onClick={() => onNavigate('users')}
+        />
+        <QuickActionCard
+          title="View Companies"
+          subtitle="Registered Companies"
+          icon={Building}
+          iconBgColor="bg-teal-50"
+          iconColor="text-teal-600"
+          onClick={() => onNavigate('company')}
+        />
+        <QuickActionCard
+          title="Edit Plans"
+          subtitle="Edit Subscription Plans"
+          icon={FileText}
+          iconBgColor="bg-orange-50"
+          iconColor="text-orange-600"
+          onClick={() => onNavigate('subscriptions')}
+        />
       </div>
     </div>
   );

@@ -1,13 +1,20 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import api from '../utils/axios';
 
+interface RecentActivity {
+  id: string;
+  action: string;
+  userName: string;
+  createdAt: string;
+  resourceType: string | null;
+}
+
 interface DashboardStats {
-  totalUsers: number;
-  activeSubscriptions: number;
+  activeUsers: number;
   totalCompanies: number;
   totalEmployees: number;
   monthlyRevenue: number;
-  suspiciousLogins: number;
+  totalIncome: number;
 }
 
 interface ChartDataPoint {
@@ -18,6 +25,7 @@ interface ChartDataPoint {
 interface DashboardState {
   stats: DashboardStats;
   chartData: ChartDataPoint[];
+  recentActivities: RecentActivity[];
   userRole: string;
   isLoading: boolean;
   error: string | null;
@@ -25,14 +33,14 @@ interface DashboardState {
 
 const initialState: DashboardState = {
   stats: {
-    totalUsers: 0,
-    activeSubscriptions: 0,
+    activeUsers: 0,
     totalCompanies: 0,
     totalEmployees: 0,
     monthlyRevenue: 0,
-    suspiciousLogins: 0,
+    totalIncome: 0,
   },
   chartData: [],
+  recentActivities: [],
   userRole: 'System Administrator',
   isLoading: false,
   error: null,
@@ -72,14 +80,14 @@ const dashboardSlice = createSlice({
       .addCase(fetchDashboardStats.fulfilled, (state, action: PayloadAction<any>) => {
         state.isLoading = false;
         state.stats = {
-          totalUsers: action.payload.totalUsers,
-          activeSubscriptions: action.payload.activeSubscriptions,
+          activeUsers: action.payload.activeUsers,
           totalCompanies: action.payload.totalCompanies,
           totalEmployees: action.payload.totalEmployees,
           monthlyRevenue: action.payload.monthlyRevenue,
-          suspiciousLogins: action.payload.suspiciousLogins,
+          totalIncome: action.payload.totalIncome,
         };
         state.chartData = action.payload.chartData;
+        state.recentActivities = action.payload.recentActivities;
       })
       .addCase(fetchDashboardStats.rejected, (state, action: PayloadAction<any>) => {
         state.isLoading = false;
