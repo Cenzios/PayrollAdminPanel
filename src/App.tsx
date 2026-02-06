@@ -5,6 +5,7 @@ import Users from './pages/Users';
 import Company from './pages/Company';
 import Notifications from './pages/Notifications';
 import Subscriptions from './pages/Subscriptions';
+import Settings from './pages/Settings';
 import Login from './pages/Login';
 import { useAppSelector } from './store/hooks';
 
@@ -29,6 +30,8 @@ function App() {
         return <Notifications />;
       case 'subscriptions':
         return <Subscriptions />;
+      case 'settings':
+        return <Settings />;
       default:
         return <Dashboard onNavigate={setCurrentPage} />;
     }

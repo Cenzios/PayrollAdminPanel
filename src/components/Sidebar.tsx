@@ -39,8 +39,8 @@ const Sidebar = ({ activeItem, onNavigate }: SidebarProps) => {
               key={item.id}
               onClick={() => onNavigate(item.id)}
               className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg mb-1 transition-all ${isActive
-                  ? 'bg-blue-50 text-blue-600'
-                  : 'text-gray-600 hover:bg-gray-50'
+                ? 'bg-blue-50 text-blue-600'
+                : 'text-gray-600 hover:bg-gray-50'
                 }`}
             >
               <Icon size={20} />
@@ -51,7 +51,13 @@ const Sidebar = ({ activeItem, onNavigate }: SidebarProps) => {
       </nav>
 
       <div className="p-4 border-t border-gray-200">
-        <button className="w-full flex items-center space-x-3 px-4 py-3 rounded-lg text-gray-600 hover:bg-gray-50 transition-all">
+        <button
+          onClick={() => onNavigate('settings')}
+          className={`w-full flex items-center space-x-3 px-4 py-3 rounded-lg transition-all ${activeItem === 'settings'
+            ? 'bg-blue-50 text-blue-600'
+            : 'text-gray-600 hover:bg-gray-50'
+            }`}
+        >
           <Settings size={20} />
           <span className="font-medium">Settings</span>
         </button>
