@@ -1,8 +1,8 @@
 import axios from 'axios';
 
-const BASE_URL = 'https://payrolladminbackend.cenzios.com/api';
+const BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://payrolladminbackend.cenzios.com/api';
 
-console.log('🔌 HARD CODED API BASE URL:', BASE_URL);
+console.log('🔌 API BASE URL:', BASE_URL);
 
 const api = axios.create({
   baseURL: BASE_URL,

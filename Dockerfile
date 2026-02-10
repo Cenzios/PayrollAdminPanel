@@ -12,6 +12,12 @@ RUN npm install
 # Copy the rest of the application
 COPY . .
 
+# Add build-time environment variables for Vite
+ARG VITE_API_BASE_URL
+ARG VITE_DEBUG_MESSAGE
+ENV VITE_API_BASE_URL=$VITE_API_BASE_URL
+ENV VITE_DEBUG_MESSAGE=$VITE_DEBUG_MESSAGE
+
 # Build the application
 RUN npm run build
 
