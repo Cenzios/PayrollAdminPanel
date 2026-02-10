@@ -13,6 +13,10 @@ function App() {
   const { token } = useAppSelector((state) => state.auth);
   const [currentPage, setCurrentPage] = useState('dashboard');
 
+  // Debug: Check environment variable imports
+  console.log('🚀 Env Debug Message:', import.meta.env.VITE_DEBUG_MESSAGE);
+  console.log('🔗 Base API URL:', import.meta.env.VITE_API_BASE_URL);
+
   // If no token, always show login page
   if (!token) {
     return <Login onLoginSuccess={() => setCurrentPage('dashboard')} />;
