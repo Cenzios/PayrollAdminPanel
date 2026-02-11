@@ -1,7 +1,8 @@
 import { Search, MessageSquare, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchUsers } from '../store/userSlice';
+import { fetchUsers, sendUserNotification } from '../store/userSlice';
+import NotificationModal from '../components/NotificationModal';
 
 const Users = () => {
   const dispatch = useAppDispatch();
@@ -10,6 +11,10 @@ const Users = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  // Notification Modal State
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string } | null>(null);
 
   useEffect(() => {
     dispatch(fetchUsers({ page: currentPage, limit: rowsPerPage }));
@@ -32,6 +37,20 @@ const Users = () => {
         return 'bg-gray-50 text-gray-600 border-gray-100';
       default:
         return 'bg-gray-50 text-gray-600 border-gray-100';
+    }
+  };
+
+  const handleOpenModal = (userId: string, userName: string) => {
+    setSelectedUser({ id: userId, name: userName });
+    setIsModalOpen(true);
+  };
+
+  const handleSendNotification = async (userId: string, title: string, message: string) => {
+    try {
+      await dispatch(sendUserNotification({ userId, title, message })).unwrap();
+      alert('Notification sent successfully!');
+    } catch (error: any) {
+      alert(error || 'Failed to send notification');
     }
   };
 
@@ -106,7 +125,10 @@ const Users = () => {
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
-                    <button className="text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50">
+                    <button
+                      onClick={() => handleOpenModal(user.id, user.fullName || '')}
+                      className="text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                    >
                       <MessageSquare size={18} />
                     </button>
                   </td>
@@ -191,6 +213,20 @@ const Users = () => {
         </div>
       </div>
 
+      {/* Notification Modal */}
+      {selectedUser && (
+        <NotificationModal
+          isOpen={isModalOpen}
+          userId={selectedUser.id}
+          userName={selectedUser.name}
+          onClose={() => {
+            setIsModalOpen(false);
+            setSelectedUser(null);
+          }}
+          onSend={handleSendNotification}
+        />
+      )}
+
       {/* Click outside to close menu backdrop */}
       {activeMenuId && (
         <div
@@ -203,4 +239,3 @@ const Users = () => {
 };
 
 export default Users;
-

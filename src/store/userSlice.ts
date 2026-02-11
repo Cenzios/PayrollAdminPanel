@@ -31,6 +31,21 @@ export const fetchUsers = createAsyncThunk(
     }
 );
 
+export const sendUserNotification = createAsyncThunk(
+    'users/sendNotification',
+    async ({ userId, title, message }: { userId: string; title: string; message: string }, { rejectWithValue }) => {
+        try {
+            const response = await api.post('/admin/notifications/send', { userId, title, message });
+            if (response.data.success) {
+                return response.data.data;
+            }
+            return rejectWithValue('Failed to send notification');
+        } catch (err: any) {
+            return rejectWithValue(err.response?.data?.error || 'Failed to send notification');
+        }
+    }
+);
+
 const userSlice = createSlice({
     name: 'users',
     initialState,
