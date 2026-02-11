@@ -1,12 +1,13 @@
 import { Search, MessageSquare, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchUsers, sendUserNotification } from '../store/userSlice';
+import { fetchUsers, sendUserNotification, fetchUserDetails, clearSelectedUser } from '../store/userSlice';
 import NotificationModal from '../components/NotificationModal';
+import UserDetailsModal from '../components/UserDetailsModal';
 
 const Users = () => {
   const dispatch = useAppDispatch();
-  const { users, totalUsers } = useAppSelector((state) => state.users);
+  const { users, totalUsers, selectedUser: userDetails } = useAppSelector((state) => state.users);
   const [searchTerm, setSearchTerm] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -15,6 +16,9 @@ const Users = () => {
   // Notification Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState<{ id: string; name: string } | null>(null);
+
+  // User Details Modal State
+  const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
 
   useEffect(() => {
     dispatch(fetchUsers({ page: currentPage, limit: rowsPerPage }));
@@ -40,9 +44,19 @@ const Users = () => {
     }
   };
 
-  const handleOpenModal = (userId: string, userName: string) => {
+  const handleOpenModal = (userId: string, userName: string, e: React.MouseEvent) => {
+    e.stopPropagation(); // Prevent row click
     setSelectedUser({ id: userId, name: userName });
     setIsModalOpen(true);
+  };
+
+  const handleRowClick = async (userId: string) => {
+    try {
+      await dispatch(fetchUserDetails(userId)).unwrap();
+      setIsDetailsModalOpen(true);
+    } catch (error: any) {
+      alert(error || 'Failed to fetch user details');
+    }
   };
 
   const handleSendNotification = async (userId: string, title: string, message: string) => {
@@ -52,6 +66,11 @@ const Users = () => {
     } catch (error: any) {
       alert(error || 'Failed to send notification');
     }
+  };
+
+  const handleCloseDetails = () => {
+    setIsDetailsModalOpen(false);
+    dispatch(clearSelectedUser());
   };
 
   return (
@@ -97,7 +116,11 @@ const Users = () => {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filteredUsers.map((user) => (
-                <tr key={user.id} className="hover:bg-gray-50/50 transition-colors group">
+                <tr
+                  key={user.id}
+                  className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
+                  onClick={() => handleRowClick(user.id)}
+                >
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
                       <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium">
@@ -126,7 +149,7 @@ const Users = () => {
                   </td>
                   <td className="px-6 py-4 text-center">
                     <button
-                      onClick={() => handleOpenModal(user.id, user.fullName || '')}
+                      onClick={(e) => handleOpenModal(user.id, user.fullName || '', e)}
                       className="text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50"
                     >
                       <MessageSquare size={18} />
@@ -140,7 +163,10 @@ const Users = () => {
                   <td className="px-6 py-4 text-center">
                     <div className="relative">
                       <button
-                        onClick={() => setActiveMenuId(activeMenuId === user.id ? null : user.id)}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setActiveMenuId(activeMenuId === user.id ? null : user.id);
+                        }}
                         className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
                       >
                         <MoreVertical size={18} />
@@ -226,6 +252,13 @@ const Users = () => {
           onSend={handleSendNotification}
         />
       )}
+
+      {/* User Details Modal */}
+      <UserDetailsModal
+        isOpen={isDetailsModalOpen}
+        onClose={handleCloseDetails}
+        userData={userDetails}
+      />
 
       {/* Click outside to close menu backdrop */}
       {activeMenuId && (
