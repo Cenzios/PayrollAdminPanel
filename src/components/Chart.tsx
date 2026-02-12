@@ -1,3 +1,16 @@
+import { useState } from 'react';
+import {
+  AreaChart,
+  Area,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  TooltipProps
+} from 'recharts';
+import { ChevronDown } from 'lucide-react';
+
 interface ChartDataPoint {
   month: string;
   value: number;
@@ -8,91 +21,113 @@ interface ChartProps {
   title: string;
 }
 
+const CustomTooltip = ({ active, payload }: TooltipProps<number, string>) => {
+  if (active && payload && payload.length) {
+    return (
+      <div className="bg-white p-3 shadow-xl border border-gray-100 rounded-xl">
+        <p className="text-sm font-semibold text-gray-900 mb-1">{payload[0].payload.month}</p>
+        <p className="text-sm text-blue-600 font-bold">
+          Users: {payload[0].value?.toLocaleString()}
+        </p>
+      </div>
+    );
+  }
+  return null;
+};
+
 const Chart = ({ data, title }: ChartProps) => {
-  const maxValue = data.length > 0 ? Math.max(...data.map((d) => d.value)) : 0;
-  const minValue = data.length > 0 ? Math.min(...data.map((d) => d.value)) : 0;
-  const range = maxValue - minValue;
-  const padding = range > 0 ? range * 0.1 : 10;
-  const adjustedMax = maxValue + padding;
-  const adjustedMin = Math.max(0, minValue - padding);
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const [currentRange, setCurrentRange] = useState('yearly');
 
-  const height = 400;
-  const width = 100;
+  const ranges = [
+    { label: 'Monthly', value: 'monthly' },
+    { label: '3 monthly', value: '3months' },
+    { label: '6 monthly', value: '6months' },
+    { label: 'Yearly', value: 'yearly' }
+  ];
 
-  const yTicks = [0, 1000, 2000, 3000, 4000, 5000];
+  const currentRangeLabel = ranges.find(r => r.value === currentRange)?.label || 'Yearly';
 
-  const points = data.length > 0
-    ? data
-      .map((point, index) => {
-        const x = (index / (data.length - 1)) * width;
-        const y =
-          height - ((point.value - adjustedMin) / (adjustedMax - adjustedMin)) * height;
-        return `${x},${y}`;
-      })
-      .join(' ')
-    : '';
-
-  const pathD = points ? `M 0,${height} L ${points} L ${width},${height} Z` : '';
+  // Map data to recharts format if necessary (though we use month/value directly)
+  // We use the same keys as the backend: 'month' and 'value'
 
   return (
-    <div className="bg-white rounded-xl p-6 shadow-sm border border-gray-100">
-      <h3 className="text-sm font-medium text-gray-500 uppercase tracking-wide mb-6">
-        {title}
-      </h3>
+    <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 h-[450px] flex flex-col">
+      <div className="flex items-center justify-between mb-8">
+        <h3 className="text-xl font-bold text-gray-800">{title}</h3>
 
-      <div className="relative">
-        <div className="flex">
-          <div className="flex flex-col justify-between text-xs text-gray-400 pr-4 h-96">
-            {yTicks.reverse().map((tick) => (
-              <div key={tick}>{tick / 1000}K</div>
-            ))}
-          </div>
+        <div className="relative">
+          <button
+            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+            className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-sm font-medium rounded-xl transition-colors"
+          >
+            {currentRangeLabel}
+            <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+          </button>
 
-          <div className="flex-1 relative">
-            <svg
-              viewBox={`0 0 ${width} ${height}`}
-              className="w-full h-96"
-              preserveAspectRatio="none"
-            >
-              <defs>
-                <linearGradient id="areaGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                  <stop offset="0%" stopColor="#3b82f6" stopOpacity="0.3" />
-                  <stop offset="100%" stopColor="#3b82f6" stopOpacity="0.05" />
-                </linearGradient>
-              </defs>
-
-              {yTicks.map((_, index) => (
-                <line
-                  key={index}
-                  x1="0"
-                  y1={(index * height) / (yTicks.length - 1)}
-                  x2={width}
-                  y2={(index * height) / (yTicks.length - 1)}
-                  stroke="#e5e7eb"
-                  strokeWidth="0.5"
-                  strokeDasharray="2,2"
-                />
-              ))}
-
-              {pathD && <path d={pathD} fill="url(#areaGradient)" />}
-
-              {points && (
-                <polyline
-                  points={points}
-                  fill="none"
-                  stroke="#3b82f6"
-                  strokeWidth="2"
-                />
-              )}
-            </svg>
-
-            <div className="flex justify-between text-xs text-gray-400 mt-2">
-              {data.map((point) => (
-                <span key={point.month}>{point.month}</span>
-              ))}
-            </div>
-          </div>
+          {isDropdownOpen && (
+            <>
+              <div
+                className="fixed inset-0 z-10"
+                onClick={() => setIsDropdownOpen(false)}
+              />
+              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
+                {ranges.map((range) => (
+                  <button
+                    key={range.value}
+                    onClick={() => {
+                      setCurrentRange(range.value);
+                      setIsDropdownOpen(false);
+                      // Note: In a real app, you'd trigger a refetch here
+                    }}
+                    className={`w-full text-left px-4 py-2 text-sm hover:bg-blue-50 hover:text-blue-600 transition-colors ${currentRange === range.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600'
+                      }`}
+                  >
+                    {range.label}
+                  </button>
+                ))}
+              </div>
+            </>
+          )}
         </div>
+      </div>
+
+      <div className="flex-1 relative">
+        <ResponsiveContainer width="100%" height="100%">
+          <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+            <defs>
+              <linearGradient id="colorValue" x1="0" y1="0" x2="0" y2="1">
+                <stop offset="5%" stopColor="#3b82f6" stopOpacity={0.1} />
+                <stop offset="95%" stopColor="#3b82f6" stopOpacity={0} />
+              </linearGradient>
+            </defs>
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+            <XAxis
+              dataKey="month"
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }}
+              dy={10}
+            />
+            <YAxis
+              axisLine={false}
+              tickLine={false}
+              tick={{ fill: '#94a3b8', fontSize: 12, fontWeight: 500 }}
+              tickFormatter={(value) => `${value >= 1000 ? (value / 1000).toFixed(0) + 'k' : value}`}
+              allowDecimals={false}
+            />
+            <Tooltip content={<CustomTooltip />} />
+            <Area
+              type="monotone"
+              dataKey="value"
+              stroke="#3b82f6"
+              strokeWidth={3}
+              fillOpacity={1}
+              fill="url(#colorValue)"
+              animationDuration={1500}
+            />
+          </AreaChart>
+        </ResponsiveContainer>
       </div>
     </div>
   );
