@@ -1,4 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import api from '../utils/axios';
 
 interface AuthState {
     user: any | null;
@@ -13,8 +14,6 @@ const initialState: AuthState = {
     isLoading: false,
     error: null,
 };
-
-import api from '../utils/axios';
 
 export const loginUser = createAsyncThunk(
     'auth/loginUser',
@@ -35,6 +34,21 @@ export const loginUser = createAsyncThunk(
     }
 );
 
+export const fetchMe = createAsyncThunk(
+    'auth/fetchMe',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/admin/profile/details');
+            if (response.data.success) {
+                return response.data.data;
+            }
+            return rejectWithValue(response.data.message || 'Failed to fetch user');
+        } catch (err: any) {
+            return rejectWithValue(err.response?.data?.message || 'Failed to fetch user');
+        }
+    }
+);
+
 const authSlice = createSlice({
     name: 'auth',
     initialState,
@@ -46,6 +60,13 @@ const authSlice = createSlice({
         },
         clearError: (state) => {
             state.error = null;
+        },
+        updateUserData: (state, action: PayloadAction<any>) => {
+            if (state.user) {
+                state.user = { ...state.user, ...action.payload };
+            } else {
+                state.user = action.payload;
+            }
         },
     },
     extraReducers: (builder) => {
@@ -62,9 +83,21 @@ const authSlice = createSlice({
             .addCase(loginUser.rejected, (state, action: PayloadAction<any>) => {
                 state.isLoading = false;
                 state.error = action.payload;
+            })
+            .addCase(fetchMe.pending, (state) => {
+                state.isLoading = true;
+            })
+            .addCase(fetchMe.fulfilled, (state, action: PayloadAction<any>) => {
+                state.isLoading = false;
+                state.user = action.payload;
+            })
+            .addCase(fetchMe.rejected, (state) => {
+                state.isLoading = false;
+                // If fetch me fails, we might want to logout, but for now just clear user
+                state.user = null;
             });
     },
 });
 
-export const { logout, clearError } = authSlice.actions;
+export const { logout, clearError, updateUserData } = authSlice.actions;
 export default authSlice.reducer;

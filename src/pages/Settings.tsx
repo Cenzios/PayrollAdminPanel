@@ -3,6 +3,9 @@ import { User, Mail, Lock, Eye, EyeOff, LogOut, Edit3 } from 'lucide-react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { logout } from '../store/authSlice';
 import { updateProfile, changePassword, clearStatus } from '../store/settingsSlice';
+import { updateUserData, fetchMe } from '../store/authSlice';
+import SuccessModal from '../components/SuccessModal';
+
 
 const Settings = () => {
     const dispatch = useAppDispatch();
@@ -14,6 +17,24 @@ const Settings = () => {
         fullName: user?.fullName || '',
         email: user?.email || '',
     });
+
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [successConfig, setSuccessConfig] = useState({ title: '', message: '' });
+
+    // Keep form in sync with user state if it changes
+    useEffect(() => {
+        if (user) {
+            setProfileData({
+                fullName: user.fullName || '',
+                email: user.email || '',
+            });
+        }
+    }, [user]);
+
+    // Fetch profile details on mount to ensure we have the latest data
+    useEffect(() => {
+        dispatch(fetchMe());
+    }, [dispatch]);
 
     // Password Form State
     const [passwordData, setPasswordData] = useState({
@@ -29,13 +50,31 @@ const Settings = () => {
     });
 
     useEffect(() => {
-        if (successMessage || error) {
+        if (successMessage) {
+            // Show success modal
+            setSuccessConfig({
+                title: 'Update Successful',
+                message: successMessage,
+            });
+            setIsSuccessModalOpen(true);
+
+            // Sync user data if profile was updated
+            if (successMessage.toLowerCase().includes('profile') || successMessage.toLowerCase().includes('detail')) {
+                dispatch(updateUserData(profileData));
+            }
+
+            dispatch(clearStatus());
+        }
+    }, [successMessage, dispatch, profileData]);
+
+    useEffect(() => {
+        if (error) {
             const timer = setTimeout(() => {
                 dispatch(clearStatus());
             }, 5000);
             return () => clearTimeout(timer);
         }
-    }, [successMessage, error, dispatch]);
+    }, [error, dispatch]);
 
     const handleProfileUpdate = () => {
         if (!profileData.fullName || !profileData.email) return;
@@ -79,13 +118,7 @@ const Settings = () => {
                             <p className="text-gray-500">{user?.email || 'admin@company.com'}</p>
                         </div>
                     </div>
-                    <button
-                        onClick={handleLogout}
-                        className="flex items-center space-x-2 px-6 py-2 bg-red-50 text-red-500 rounded-2xl font-semibold hover:bg-red-100 transition-colors"
-                    >
-                        <LogOut size={20} />
-                        <span>Logout</span>
-                    </button>
+                    
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -210,13 +243,20 @@ const Settings = () => {
                     </div>
                 </div>
 
-                {/* Global Feedback */}
-                {(successMessage || error) && (
-                    <div className={`p-4 rounded-2xl border ${successMessage ? 'bg-green-50 border-green-100 text-green-600' : 'bg-red-50 border-red-100 text-red-600'}`}>
-                        <p className="text-center font-bold">{successMessage || error}</p>
+                {/* Global Feedback (Error only) */}
+                {error && (
+                    <div className="p-4 rounded-2xl border bg-red-50 border-red-100 text-red-600 animate-in slide-in-from-top-2 duration-300">
+                        <p className="text-center font-bold">{error}</p>
                     </div>
                 )}
             </div>
+
+            <SuccessModal
+                isOpen={isSuccessModalOpen}
+                onClose={() => setIsSuccessModalOpen(false)}
+                title={successConfig.title}
+                message={successConfig.message}
+            />
         </div>
     );
 };

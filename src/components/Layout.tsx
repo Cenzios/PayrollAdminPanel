@@ -3,6 +3,9 @@ import Sidebar from './Sidebar';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { logout } from '../store/authSlice';
 import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
+import { useEffect } from 'react';
+import { fetchMe } from '../store/authSlice';
+
 
 interface LayoutProps {
   children: ReactNode;
@@ -12,8 +15,14 @@ interface LayoutProps {
 
 const Layout = ({ children, activeItem, onNavigate }: LayoutProps) => {
   const dispatch = useAppDispatch();
-  const { user } = useAppSelector((state) => state.auth);
+  const { user, token } = useAppSelector((state) => state.auth);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+
+  useEffect(() => {
+    if (token && !user) {
+      dispatch(fetchMe());
+    }
+  }, [dispatch, token, user]);
 
   const userName = user?.fullName || "Admin User";
   const initials = userName

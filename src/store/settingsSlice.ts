@@ -13,6 +13,21 @@ const initialState: SettingsState = {
     successMessage: null,
 };
 
+export const fetchProfile = createAsyncThunk(
+    'settings/fetchProfile',
+    async (_, { rejectWithValue }) => {
+        try {
+            const response = await api.get('/admin/profile/details');
+            if (response.data.success) {
+                return response.data;
+            }
+            return rejectWithValue(response.data.message);
+        } catch (err: any) {
+            return rejectWithValue(err.response?.data?.message || 'Failed to fetch profile');
+        }
+    }
+);
+
 export const updateProfile = createAsyncThunk(
     'settings/updateProfile',
     async (data: { fullName: string; email: string }, { rejectWithValue }) => {
@@ -79,6 +94,18 @@ const settingsSlice = createSlice({
                 state.successMessage = action.payload.message;
             })
             .addCase(changePassword.rejected, (state, action: PayloadAction<any>) => {
+                state.isLoading = false;
+                state.error = action.payload;
+            })
+            // Fetch Profile
+            .addCase(fetchProfile.pending, (state) => {
+                state.isLoading = true;
+                state.error = null;
+            })
+            .addCase(fetchProfile.fulfilled, (state) => {
+                state.isLoading = false;
+            })
+            .addCase(fetchProfile.rejected, (state, action: PayloadAction<any>) => {
                 state.isLoading = false;
                 state.error = action.payload;
             });
