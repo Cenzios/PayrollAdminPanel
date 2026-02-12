@@ -7,12 +7,17 @@ import illustrationAsset from '../assets/images/Ilustration-Asset.svg';
 import mainImage from '../assets/images/Image.svg';
 import kit2 from '../assets/images/Kit 2.svg';
 import bgIllustration from '../assets/images/Background-illustration.svg';
+import {  Eye, EyeOff } from 'lucide-react';
+
 
 interface LoginProps {
     onLoginSuccess: () => void;
 }
 
 const Login = ({ onLoginSuccess }: LoginProps) => {
+
+    const [showPassword, setShowPassword] = useState(false);
+
     const dispatch = useAppDispatch();
     const { isLoading, error, token } = useAppSelector((state) => state.auth);
 
@@ -206,23 +211,41 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
                                 >
                                     Password
                                 </label>
+
                                 <div className="relative">
+                                    {/* Left Lock Icon */}
                                     <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
                                         <Lock className="h-5 w-5 text-gray-400" />
                                     </div>
+
+                                    {/* Password Input */}
                                     <input
-                                        type="password"
+                                        type={showPassword ? "text" : "password"}
                                         id="password"
                                         name="password"
                                         value={formData.password}
                                         onChange={handleChange}
-                                        className={`block w-full pl-10 pr-3 py-3 border ${validationErrors.password
-                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                                        className={`block w-full pl-10 pr-10 py-3 border ${validationErrors.password
+                                                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                                                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                                             } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                                         placeholder="••••••••"
                                     />
+
+                                    {/* Show/Hide Button */}
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowPassword(!showPassword)}
+                                        className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-600"
+                                    >
+                                        {showPassword ? (
+                                            <EyeOff className="h-5 w-5" />
+                                        ) : (
+                                            <Eye className="h-5 w-5" />
+                                        )}
+                                    </button>
                                 </div>
+
                                 {validationErrors.password && (
                                     <p className="mt-1 text-sm text-red-600">
                                         {validationErrors.password}
