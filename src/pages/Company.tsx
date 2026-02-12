@@ -1,19 +1,39 @@
 import { Search, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchCompanies } from '../store/companySlice';
+import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
+import api from '../utils/axios';
+
+interface CompanyData {
+  id: string;
+  name: string;
+  address: string;
+  contactNumber: string;
+  createdAt: string;
+  ownerName: string;
+  employeeCount: number;
+  subscriptionPlan: string;
+}
 
 const Company = () => {
-  const dispatch = useAppDispatch();
-  const { companies, totalCompanies, isLoading } = useAppSelector((state) => state.companies);
   const [searchTerm, setSearchTerm] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
-  useEffect(() => {
-    dispatch(fetchCompanies({ page: currentPage, limit: rowsPerPage, search: searchTerm }));
-  }, [dispatch, currentPage, rowsPerPage, searchTerm]);
+  const { data: companiesData, isLoading } = useQuery({
+    queryKey: ['companies', currentPage, rowsPerPage, searchTerm],
+    queryFn: async () => {
+      const response = await api.get('/admin/companies', {
+        params: { page: currentPage, limit: rowsPerPage, search: searchTerm }
+      });
+      return response.data;
+    },
+  });
+
+  console.log('Companies Data:', companiesData);
+  const rawData = companiesData?.data;
+  const companies = (Array.isArray(rawData) ? rawData : rawData?.companies || []) as CompanyData[];
+  const totalCompanies = companiesData?.pagination?.total || rawData?.pagination?.total || 0;
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -66,7 +86,11 @@ const Company = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {companies.map((company) => (
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-10 text-center text-gray-500">Loading companies...</td>
+                </tr>
+              ) : companies.map((company) => (
                 <tr key={company.id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
@@ -181,4 +205,3 @@ const Company = () => {
 };
 
 export default Company;
-

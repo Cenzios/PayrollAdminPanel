@@ -1,13 +1,21 @@
 import { Search, MessageSquare, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
-import { useState, useEffect } from 'react';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchUsers, sendUserNotification, fetchUserDetails, clearSelectedUser } from '../store/userSlice';
+import { useState } from 'react';
+import { useQuery, useMutation } from '@tanstack/react-query';
+import api from '../utils/axios';
 import NotificationModal from '../components/NotificationModal';
 import UserDetailsModal from '../components/UserDetailsModal';
 
+interface User {
+  id: string;
+  fullName: string;
+  email: string;
+  companyCount: number;
+  employeeCount: number;
+  currentPlan: string;
+  subscriptionStatus: string;
+}
+
 const Users = () => {
-  const dispatch = useAppDispatch();
-  const { users, totalUsers, selectedUser: userDetails } = useAppSelector((state) => state.users);
   const [searchTerm, setSearchTerm] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -15,14 +23,37 @@ const Users = () => {
 
   // Notification Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [selectedUser, setSelectedUser] = useState<{ id: string; name: string } | null>(null);
+  const [selectedNotificationUser, setSelectedNotificationUser] = useState<{ id: string; name: string } | null>(null);
 
   // User Details Modal State
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
+  const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
 
-  useEffect(() => {
-    dispatch(fetchUsers({ page: currentPage, limit: rowsPerPage }));
-  }, [dispatch, currentPage, rowsPerPage]);
+  // Fetch users with data from API
+  const { data: usersData, isLoading: isUsersLoading } = useQuery({
+    queryKey: ['users', currentPage, rowsPerPage],
+    queryFn: async () => {
+      const response = await api.get('/admin/users', {
+        params: { page: currentPage, limit: rowsPerPage }
+      });
+      return response.data;
+    },
+  });
+
+  console.log('Users Data:', usersData);
+  const rawData = usersData?.data;
+  const users = (Array.isArray(rawData) ? rawData : rawData?.users || []) as User[];
+  const totalUsers = usersData?.pagination?.total || rawData?.pagination?.total || 0;
+
+  // Selective user for detail view
+  const { data: userDetails } = useQuery({
+    queryKey: ['userDetails', selectedUserId],
+    queryFn: async () => {
+      const response = await api.get(`/admin/users/${selectedUserId}`);
+      return response.data.data;
+    },
+    enabled: !!selectedUserId,
+  });
 
   const filteredUsers = users.filter(user =>
     (user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
@@ -46,31 +77,35 @@ const Users = () => {
 
   const handleOpenModal = (userId: string, userName: string, e: React.MouseEvent) => {
     e.stopPropagation(); // Prevent row click
-    setSelectedUser({ id: userId, name: userName });
+    setSelectedNotificationUser({ id: userId, name: userName });
     setIsModalOpen(true);
   };
 
-  const handleRowClick = async (userId: string) => {
-    try {
-      await dispatch(fetchUserDetails(userId)).unwrap();
-      setIsDetailsModalOpen(true);
-    } catch (error: any) {
-      alert(error || 'Failed to fetch user details');
-    }
+  const handleRowClick = (userId: string) => {
+    setSelectedUserId(userId);
+    setIsDetailsModalOpen(true);
   };
 
-  const handleSendNotification = async (userId: string, title: string, message: string) => {
-    try {
-      await dispatch(sendUserNotification({ userId, title, message })).unwrap();
+  const notificationMutation = useMutation({
+    mutationFn: async ({ userId, title, message }: { userId: string, title: string, message: string }) => {
+      const response = await api.post('/admin/notifications/send', { userId, title, message });
+      return response.data;
+    },
+    onSuccess: () => {
       alert('Notification sent successfully!');
-    } catch (error: any) {
-      alert(error || 'Failed to send notification');
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.error || 'Failed to send notification');
     }
+  });
+
+  const handleSendNotification = async (userId: string, title: string, message: string) => {
+    notificationMutation.mutate({ userId, title, message });
   };
 
   const handleCloseDetails = () => {
     setIsDetailsModalOpen(false);
-    dispatch(clearSelectedUser());
+    setSelectedUserId(null);
   };
 
   return (
@@ -115,7 +150,11 @@ const Users = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
-              {filteredUsers.map((user) => (
+              {isUsersLoading ? (
+                <tr>
+                  <td colSpan={7} className="px-6 py-10 text-center text-gray-500">Loading users...</td>
+                </tr>
+              ) : filteredUsers.map((user) => (
                 <tr
                   key={user.id}
                   className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
@@ -134,12 +173,12 @@ const Users = () => {
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className="text-sm text-gray-600 font-medium">
-                      {user.companyCount?.toString().padStart(2, '0')}
+                      {(user.companyCount ?? 0).toString().padStart(2, '0')}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <span className="text-sm text-gray-600 font-medium">
-                      {user.employeeCount}
+                      {user.employeeCount ?? 0}
                     </span>
                   </td>
                   <td className="px-6 py-4">
@@ -240,14 +279,14 @@ const Users = () => {
       </div>
 
       {/* Notification Modal */}
-      {selectedUser && (
+      {selectedNotificationUser && (
         <NotificationModal
           isOpen={isModalOpen}
-          userId={selectedUser.id}
-          userName={selectedUser.name}
+          userId={selectedNotificationUser.id}
+          userName={selectedNotificationUser.name}
           onClose={() => {
             setIsModalOpen(false);
-            setSelectedUser(null);
+            setSelectedNotificationUser(null);
           }}
           onSend={handleSendNotification}
         />

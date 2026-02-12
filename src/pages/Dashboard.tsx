@@ -1,22 +1,36 @@
-import { useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Building2, FileText, AlertCircle, DollarSign, Users, Building } from 'lucide-react';
+import api from '../utils/axios';
 import StatsCard from '../components/StatsCard';
 import Chart from '../components/Chart';
 import QuickActionCard from '../components/QuickActionCard';
-import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { fetchDashboardStats } from '../store/dashboardSlice';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
 }
 
 const Dashboard = ({ onNavigate }: DashboardProps) => {
-  const dispatch = useAppDispatch();
-  const { stats, chartData, recentActivities, userRole } = useAppSelector((state) => state.dashboard);
+  const { data: dashboardData } = useQuery({
+    queryKey: ['dashboardStats'],
+    queryFn: async () => {
+      const response = await api.get('/admin/dashboard/summary');
+      return response.data.data;
+    },
+  });
 
-  useEffect(() => {
-    dispatch(fetchDashboardStats());
-  }, [dispatch]);
+  console.log('Dashboard Data:', dashboardData);
+
+  // Handle both nested stats object and flattened response
+  const stats = dashboardData?.stats || dashboardData || {
+    activeUsers: 0,
+    totalCompanies: 0,
+    totalEmployees: 0,
+    monthlyRevenue: 0,
+    totalIncome: 0,
+  };
+  const chartData = dashboardData?.chartData || [];
+  const recentActivities = dashboardData?.recentActivities || [];
+  const userRole = 'System Administrator';
 
   const formatTime = (dateString: string) => {
     const now = new Date();
@@ -115,7 +129,7 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
               <h3 className="text-lg font-bold text-gray-800">Recent Activities</h3>
             </div>
             <div className="flex-1 overflow-y-auto max-h-[400px]">
-              {recentActivities.map((activity, index) => {
+              {recentActivities.map((activity: any, index: number) => {
                 const Icon = getActivityIcon(activity.action);
                 return (
                   <div key={activity.id} className={`p-5 flex items-start space-x-4 hover:bg-gray-50 transition-colors ${index !== recentActivities.length - 1 ? 'border-b border-gray-50' : ''}`}>

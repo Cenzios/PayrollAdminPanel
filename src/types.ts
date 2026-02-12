@@ -25,6 +25,8 @@ export interface Company {
   ownerName: string;
   employeeCount: number;
   subscriptionPlan: string;
+  departments?: string[];
+  ownerId?: string;
 }
 
 export interface Plan {

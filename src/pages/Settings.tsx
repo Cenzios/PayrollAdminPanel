@@ -1,40 +1,24 @@
 import { useState, useEffect } from 'react';
-import { User, Mail, Lock, Eye, EyeOff, LogOut, Edit3 } from 'lucide-react';
+import { User, Mail, Lock, Eye, EyeOff, Edit3 } from 'lucide-react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import api from '../utils/axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { logout } from '../store/authSlice';
-import { updateProfile, changePassword, clearStatus } from '../store/settingsSlice';
-import { updateUserData, fetchMe } from '../store/authSlice';
+import { updateUserData } from '../store/authSlice';
 import SuccessModal from '../components/SuccessModal';
-
 
 const Settings = () => {
     const dispatch = useAppDispatch();
+    const queryClient = useQueryClient();
     const { user } = useAppSelector((state) => state.auth);
-    const { isLoading, error, successMessage } = useAppSelector((state) => state.settings);
+
+    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
+    const [successConfig, setSuccessConfig] = useState({ title: '', message: '' });
 
     // Profile Form State
     const [profileData, setProfileData] = useState({
         fullName: user?.fullName || '',
         email: user?.email || '',
     });
-
-    const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-    const [successConfig, setSuccessConfig] = useState({ title: '', message: '' });
-
-    // Keep form in sync with user state if it changes
-    useEffect(() => {
-        if (user) {
-            setProfileData({
-                fullName: user.fullName || '',
-                email: user.email || '',
-            });
-        }
-    }, [user]);
-
-    // Fetch profile details on mount to ensure we have the latest data
-    useEffect(() => {
-        dispatch(fetchMe());
-    }, [dispatch]);
 
     // Password Form State
     const [passwordData, setPasswordData] = useState({
@@ -49,54 +33,77 @@ const Settings = () => {
         confirm: false,
     });
 
+    // Fetch profile details on mount
+    const { data: meData } = useQuery({
+        queryKey: ['me'],
+        queryFn: async () => {
+            const response = await api.get('/admin/auth/me');
+            return response.data.data;
+        },
+    });
+
     useEffect(() => {
-        if (successMessage) {
-            // Show success modal
+        if (meData) {
+            setProfileData({
+                fullName: meData.fullName || '',
+                email: meData.email || '',
+            });
+            // Update auth slice cache
+            dispatch(updateUserData(meData));
+        }
+    }, [meData, dispatch]);
+
+    const updateProfileMutation = useMutation({
+        mutationFn: async (data: { fullName: string; email: string }) => {
+            const response = await api.put('/admin/settings/profile', data);
+            return response.data;
+        },
+        onSuccess: (data) => {
             setSuccessConfig({
                 title: 'Update Successful',
-                message: successMessage,
+                message: data.message || 'Profile updated successfully',
             });
             setIsSuccessModalOpen(true);
-
-            // Sync user data if profile was updated
-            if (successMessage.toLowerCase().includes('profile') || successMessage.toLowerCase().includes('detail')) {
-                dispatch(updateUserData(profileData));
-            }
-
-            dispatch(clearStatus());
+            queryClient.invalidateQueries({ queryKey: ['me'] });
+        },
+        onError: (error: any) => {
+            alert(error.response?.data?.error || 'Failed to update profile');
         }
-    }, [successMessage, dispatch, profileData]);
+    });
 
-    useEffect(() => {
-        if (error) {
-            const timer = setTimeout(() => {
-                dispatch(clearStatus());
-            }, 5000);
-            return () => clearTimeout(timer);
+    const changePasswordMutation = useMutation({
+        mutationFn: async (data: any) => {
+            const response = await api.put('/admin/settings/change-password', data);
+            return response.data;
+        },
+        onSuccess: (data) => {
+            setSuccessConfig({
+                title: 'Update Successful',
+                message: data.message || 'Password changed successfully',
+            });
+            setIsSuccessModalOpen(true);
+            setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
+        },
+        onError: (error: any) => {
+            alert(error.response?.data?.error || 'Failed to change password');
         }
-    }, [error, dispatch]);
+    });
 
     const handleProfileUpdate = () => {
         if (!profileData.fullName || !profileData.email) return;
-        dispatch(updateProfile(profileData));
+        updateProfileMutation.mutate(profileData);
     };
 
     const handlePasswordUpdate = () => {
         if (!passwordData.currentPassword || !passwordData.newPassword) return;
         if (passwordData.newPassword !== passwordData.confirmPassword) {
-            // Handle confirm password mismatch locally or via slice
+            alert('Passwords do not match');
             return;
         }
-        dispatch(changePassword({
+        changePasswordMutation.mutate({
             currentPassword: passwordData.currentPassword,
             newPassword: passwordData.newPassword,
-        }));
-        // Clear password fields on success
-        setPasswordData({ currentPassword: '', newPassword: '', confirmPassword: '' });
-    };
-
-    const handleLogout = () => {
-        dispatch(logout());
+        });
     };
 
     return (
@@ -114,11 +121,10 @@ const Settings = () => {
                             <User className="text-blue-600" size={40} />
                         </div>
                         <div>
-                            <h2 className="text-2xl font-bold text-gray-900">{user?.fullName || 'Admin User'}</h2>
-                            <p className="text-gray-500">{user?.email || 'admin@company.com'}</p>
+                            <h2 className="text-2xl font-bold text-gray-900">{meData?.fullName || user?.fullName || 'Admin User'}</h2>
+                            <p className="text-gray-500">{meData?.email || user?.email || 'admin@company.com'}</p>
                         </div>
                     </div>
-                    
                 </div>
 
                 <div className="grid grid-cols-1 lg:grid-cols-2 gap-12">
@@ -156,11 +162,11 @@ const Settings = () => {
                             <div className="pt-4">
                                 <button
                                     onClick={handleProfileUpdate}
-                                    disabled={isLoading}
+                                    disabled={updateProfileMutation.isPending}
                                     className="w-full md:w-auto flex items-center justify-center space-x-2 px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50"
                                 >
                                     <Edit3 size={18} />
-                                    <span>Edit Details</span>
+                                    <span>{updateProfileMutation.isPending ? 'Updating...' : 'Edit Details'}</span>
                                 </button>
                             </div>
                         </div>
@@ -234,21 +240,14 @@ const Settings = () => {
                         <div className="pt-4">
                             <button
                                 onClick={handlePasswordUpdate}
-                                disabled={isLoading}
+                                disabled={changePasswordMutation.isPending}
                                 className="w-full md:w-auto flex items-center justify-center space-x-2 px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50"
                             >
-                                <span>Update Password</span>
+                                <span>{changePasswordMutation.isPending ? 'Updating...' : 'Update Password'}</span>
                             </button>
                         </div>
                     </div>
                 </div>
-
-                {/* Global Feedback (Error only) */}
-                {error && (
-                    <div className="p-4 rounded-2xl border bg-red-50 border-red-100 text-red-600 animate-in slide-in-from-top-2 duration-300">
-                        <p className="text-center font-bold">{error}</p>
-                    </div>
-                )}
             </div>
 
             <SuccessModal

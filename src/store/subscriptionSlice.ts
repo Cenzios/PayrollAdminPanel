@@ -24,7 +24,7 @@ interface SubscriptionState {
 }
 
 // Hardcoded features as requested
-const getHardcodedFeatures = (planName: string): SubscriptionFeature[] => {
+export const getHardcodedFeatures = (planName: string): SubscriptionFeature[] => {
   const commonFeatures = [
     { text: 'Automatic salary & deduction calculations', included: true },
     { text: 'Monthly payslip generation (PDF / CSV / Excel', included: true },

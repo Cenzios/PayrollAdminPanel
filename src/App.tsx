@@ -3,7 +3,6 @@ import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
 import Company from './pages/Company';
-import Notifications from './pages/Notifications';
 import Subscriptions from './pages/Subscriptions';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
@@ -30,8 +29,6 @@ function App() {
         return <Users />;
       case 'company':
         return <Company />;
-      case 'notifications':
-        return <Notifications />;
       case 'subscriptions':
         return <Subscriptions />;
       case 'settings':
