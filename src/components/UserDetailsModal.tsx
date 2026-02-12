@@ -84,7 +84,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                                     <UserPlus size={24} />
                                 </div>
                                 <div>
-                                    <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Extra Slots Tacken</span>
+                                    <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Extra Slots Taken</span>
                                     <div className="flex items-center space-x-1 mt-1">
                                         <span className="text-sm font-bold text-orange-500">{stats.totalEmployees} slots used</span>
                                         <span className="text-sm text-gray-400 font-medium">out of</span>
