@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../utils/axios';
 import NotificationModal from '../components/NotificationModal';
 import UserDetailsModal from '../components/UserDetailsModal';
+import UserDetailsModalSkeleton from '../components/UserDetailsModalSkeleton';
 
 interface User {
   id: string;
@@ -46,7 +47,7 @@ const Users = () => {
   const totalUsers = usersData?.pagination?.total || rawData?.pagination?.total || 0;
 
   // Selective user for detail view
-  const { data: userDetails } = useQuery({
+  const { data: userDetails, isLoading: isUserDetailsLoading } = useQuery({
     queryKey: ['userDetails', selectedUserId],
     queryFn: async () => {
       const response = await api.get(`/admin/users/${selectedUserId}`);
@@ -294,9 +295,13 @@ const Users = () => {
 
       {/* User Details Modal */}
       <UserDetailsModal
-        isOpen={isDetailsModalOpen}
+        isOpen={isDetailsModalOpen && !isUserDetailsLoading}
         onClose={handleCloseDetails}
         userData={userDetails}
+      />
+      <UserDetailsModalSkeleton
+        isOpen={isDetailsModalOpen && isUserDetailsLoading}
+        onClose={handleCloseDetails}
       />
 
       {/* Click outside to close menu backdrop */}
