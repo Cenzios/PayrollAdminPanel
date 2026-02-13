@@ -14,9 +14,9 @@ const UserDetailsModalSkeleton: React.FC<UserDetailsModalSkeletonProps> = ({
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
-            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col animate-pulse">
+            <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
-                <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
+                <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between animate-pulse">
                     <div className="flex items-center space-x-5">
                         <div className="w-16 h-16 rounded-full bg-gray-200" />
                         <div className="space-y-2">
@@ -36,7 +36,7 @@ const UserDetailsModalSkeleton: React.FC<UserDetailsModalSkeletonProps> = ({
                 </div>
 
                 {/* Scrollable Content Area */}
-                <div className="flex-1 overflow-y-auto p-8">
+                <div className="flex-1 overflow-y-auto p-8 animate-pulse">
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                         {/* Left Column - Account Info */}
                         <div className="space-y-6">
