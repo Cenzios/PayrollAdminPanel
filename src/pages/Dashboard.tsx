@@ -4,19 +4,24 @@ import api from '../utils/axios';
 import StatsCard from '../components/StatsCard';
 import Chart from '../components/Chart';
 import QuickActionCard from '../components/QuickActionCard';
+import DashboardSkeleton from '../components/DashboardSkeleton';
 
 interface DashboardProps {
   onNavigate: (page: string) => void;
 }
 
 const Dashboard = ({ onNavigate }: DashboardProps) => {
-  const { data: dashboardData } = useQuery({
+  const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
       const response = await api.get('/admin/dashboard/summary');
       return response.data.data;
     },
   });
+
+  if (isLoading) {
+    return <DashboardSkeleton />;
+  }
 
   console.log('Dashboard Data:', dashboardData);
 
