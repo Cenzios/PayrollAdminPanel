@@ -1,6 +1,6 @@
 import { Search, MessageSquare, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
 import { useState } from 'react';
-import { useQuery, useMutation } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../utils/axios';
 import NotificationModal from '../components/NotificationModal';
 import UserDetailsModal from '../components/UserDetailsModal';
@@ -17,6 +17,7 @@ interface User {
 }
 
 const Users = () => {
+  const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
@@ -102,6 +103,32 @@ const Users = () => {
 
   const handleSendNotification = async (userId: string, title: string, message: string) => {
     notificationMutation.mutate({ userId, title, message });
+  };
+
+  const statusMutation = useMutation({
+    mutationFn: async ({ userId, status }: { userId: string, status: string }) => {
+      const response = await api.put(`/admin/users/${userId}/subscription/status`, { status });
+      return response.data;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['users'] });
+      setActiveMenuId(null);
+    },
+    onError: (error: any) => {
+      alert(error.response?.data?.error || 'Failed to update user status');
+    }
+  });
+
+  const handleSuspendUser = (userId: string) => {
+    if (window.confirm('Are you sure you want to suspend this user?')) {
+      statusMutation.mutate({ userId, status: 'CANCELLED' });
+    }
+  };
+
+  const handleActivateUser = (userId: string) => {
+    if (window.confirm('Are you sure you want to activate this user?')) {
+      statusMutation.mutate({ userId, status: 'ACTIVE' });
+    }
   };
 
   const handleCloseDetails = () => {
@@ -214,9 +241,24 @@ const Users = () => {
 
                       {activeMenuId === user.id && (
                         <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10">
-                          <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">View Details</button>
-                          <button className="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-50">Edit User</button>
-                          <button className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50">Suspend User</button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleSuspendUser(user.id);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50"
+                          >
+                            Suspend User
+                          </button>
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleActivateUser(user.id);
+                            }}
+                            className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50"
+                          >
+                            Activate User
+                          </button>
                         </div>
                       )}
                     </div>
