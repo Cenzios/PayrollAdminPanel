@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, UserPlus, Mail } from 'lucide-react';
+import { X, UserPlus } from 'lucide-react';
 
 interface UserDetailsModalProps {
     isOpen: boolean;
@@ -86,9 +86,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                                 <div>
                                     <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Extra Slots Taken</span>
                                     <div className="flex items-center space-x-1 mt-1">
-                                        <span className="text-sm font-bold text-orange-500">{stats.totalEmployees} slots used</span>
-                                        <span className="text-sm text-gray-400 font-medium">out of</span>
-                                        <span className="text-sm font-bold text-gray-900">{currentSubscription?.maxEmployees + currentSubscription?.extraSlots}</span>
+                                        <span className="text-sm font-bold text-orange-500">{(currentSubscription?.extraSlots || 0)} slots used</span>
                                     </div>
                                 </div>
                             </div>
@@ -144,14 +142,6 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                             <p className="text-blue-600 font-semibold mb-1">Next payment date</p>
                             <p className="text-lg font-bold text-blue-700">{formatDate(stats.nextPaymentDate)}</p>
                         </div>
-                    </div>
-
-                    {/* Footer Action Button */}
-                    <div className="mt-8 flex justify-end">
-                        <button className="flex items-center space-x-3 px-8 py-4 bg-gradient-to-r from-blue-500 to-blue-600 text-white font-bold rounded-2xl hover:from-blue-600 hover:to-blue-700 transition-all shadow-lg hover:shadow-blue-200 group">
-                            <Mail size={20} className="group-hover:translate-x-0.5 transition-transform" />
-                            <span>Send purchase history to the email</span>
-                        </button>
                     </div>
                 </div>
             </div>
