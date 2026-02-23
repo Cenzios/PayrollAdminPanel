@@ -9,11 +9,9 @@ import { fetchMe } from '../store/authSlice';
 
 interface LayoutProps {
   children: ReactNode;
-  activeItem: string;
-  onNavigate: (item: string) => void;
 }
 
-const Layout = ({ children, activeItem, onNavigate }: LayoutProps) => {
+const Layout = ({ children }: LayoutProps) => {
   const dispatch = useAppDispatch();
   const { user, token } = useAppSelector((state) => state.auth);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -37,7 +35,7 @@ const Layout = ({ children, activeItem, onNavigate }: LayoutProps) => {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      <Sidebar activeItem={activeItem} onNavigate={onNavigate} />
+      <Sidebar />
       <div className="ml-64">
         <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center relative z-20">
           <div></div>
@@ -68,7 +66,7 @@ const Layout = ({ children, activeItem, onNavigate }: LayoutProps) => {
                       className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                       onClick={() => {
                         setIsDropdownOpen(false);
-                        onNavigate('settings');
+                        // onNavigate('settings');
                       }}
                     >
                       <UserIcon className="h-4 w-4" />

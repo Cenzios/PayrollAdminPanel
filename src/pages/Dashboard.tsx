@@ -6,11 +6,10 @@ import Chart from '../components/Chart';
 import QuickActionCard from '../components/QuickActionCard';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 
-interface DashboardProps {
-  onNavigate: (page: string) => void;
-}
+import { useNavigate } from 'react-router-dom';
 
-const Dashboard = ({ onNavigate }: DashboardProps) => {
+const Dashboard = () => {
+  const navigate = useNavigate();
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
@@ -165,7 +164,7 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
           icon={Users}
           iconBgColor="bg-blue-50"
           iconColor="text-blue-600"
-          onClick={() => onNavigate('users')}
+          onClick={() => navigate('/users')}
         />
         <QuickActionCard
           title="View Companies"
@@ -173,7 +172,7 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
           icon={Building}
           iconBgColor="bg-teal-50"
           iconColor="text-teal-600"
-          onClick={() => onNavigate('company')}
+          onClick={() => navigate('/company')}
         />
         <QuickActionCard
           title="Edit Plans"
@@ -181,7 +180,7 @@ const Dashboard = ({ onNavigate }: DashboardProps) => {
           icon={FileText}
           iconBgColor="bg-orange-50"
           iconColor="text-orange-600"
-          onClick={() => onNavigate('subscriptions')}
+          onClick={() => navigate('/subscriptions')}
         />
       </div>
     </div>
