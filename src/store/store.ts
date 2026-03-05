@@ -1,19 +1,11 @@
 import { configureStore } from '@reduxjs/toolkit';
-import dashboardReducer from './dashboardSlice';
-import subscriptionReducer from './subscriptionSlice';
 import authReducer from './authSlice';
-import userReducer from './userSlice';
-import companyReducer from './companySlice';
-import settingsReducer from './settingsSlice';
+import subscriptionReducer from './subscriptionSlice';
 
 export const store = configureStore({
   reducer: {
-    dashboard: dashboardReducer,
-    subscription: subscriptionReducer,
     auth: authReducer,
-    users: userReducer,
-    companies: companyReducer,
-    settings: settingsReducer,
+    subscription: subscriptionReducer,
   },
 });
 

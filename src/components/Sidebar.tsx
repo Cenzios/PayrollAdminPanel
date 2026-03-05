@@ -1,4 +1,4 @@
-import { Home, Users, Building2, Bell, CreditCard, Settings } from 'lucide-react';
+import { Home, Users, Building2, CreditCard, Settings } from 'lucide-react';
 import logo from '../assets/images/logo.svg';
 
 interface SidebarProps {
@@ -10,7 +10,6 @@ const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home },
   { id: 'users', label: 'Users', icon: Users },
   { id: 'company', label: 'Company', icon: Building2 },
-  { id: 'notifications', label: 'Notifications', icon: Bell },
   { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard },
 ];
 

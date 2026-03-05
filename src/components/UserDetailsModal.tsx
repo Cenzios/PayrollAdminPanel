@@ -1,5 +1,5 @@
 import React from 'react';
-import { X, UserPlus, CreditCard, Calendar, Mail } from 'lucide-react';
+import { X, UserPlus, Mail } from 'lucide-react';
 
 interface UserDetailsModalProps {
     isOpen: boolean;
