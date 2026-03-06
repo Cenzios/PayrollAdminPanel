@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
@@ -10,37 +10,31 @@ import { useAppSelector } from './store/hooks';
 
 function App() {
   const { token } = useAppSelector((state) => state.auth);
-  const [currentPage, setCurrentPage] = useState('dashboard');
 
   // Debug: Check environment variable imports
   console.log('🚀 Env Debug Message:', import.meta.env.VITE_DEBUG_MESSAGE);
   console.log('🔗 Base API URL:', import.meta.env.VITE_API_BASE_URL);
 
-  // If no token, always show login page
+  // If no token, show login page only
   if (!token) {
-    return <Login onLoginSuccess={() => setCurrentPage('dashboard')} />;
+    return (
+      <Routes>
+        <Route path="*" element={<Login onLoginSuccess={() => { }} />} />
+      </Routes>
+    );
   }
 
-  const renderPage = () => {
-    switch (currentPage) {
-      case 'dashboard':
-        return <Dashboard onNavigate={setCurrentPage} />;
-      case 'users':
-        return <Users />;
-      case 'company':
-        return <Company />;
-      case 'subscriptions':
-        return <Subscriptions />;
-      case 'settings':
-        return <Settings />;
-      default:
-        return <Dashboard onNavigate={setCurrentPage} />;
-    }
-  };
-
   return (
-    <Layout activeItem={currentPage} onNavigate={setCurrentPage}>
-      {renderPage()}
+    <Layout>
+      <Routes>
+        <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/dashboard" element={<Dashboard />} />
+        <Route path="/users" element={<Users />} />
+        <Route path="/company" element={<Company />} />
+        <Route path="/subscriptions" element={<Subscriptions />} />
+        <Route path="/settings" element={<Settings />} />
+        <Route path="*" element={<Navigate to="/dashboard" replace />} />
+      </Routes>
     </Layout>
   );
 }
