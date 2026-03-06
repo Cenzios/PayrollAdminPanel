@@ -37,7 +37,7 @@ const Settings = () => {
     const { data: meData } = useQuery({
         queryKey: ['me'],
         queryFn: async () => {
-            const response = await api.get('/admin/auth/me');
+            const response = await api.get('/auth/me');
             return response.data.data;
         },
     });

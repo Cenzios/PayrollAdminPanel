@@ -39,6 +39,18 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Validation
+        if (!formData.name.trim()) {
+            alert('Plan name cannot be empty');
+            return;
+        }
+
+        if (formData.employeePrice < 0 || formData.registrationFee < 0 || formData.maxEmployees < 0) {
+            alert('Values cannot be negative');
+            return;
+        }
+
         setIsSaving(true);
         try {
             await onSave({
