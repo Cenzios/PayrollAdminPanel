@@ -82,13 +82,12 @@ const Company = () => {
                 <th className="px-6 py-4">Owner</th>
                 <th className="px-6 py-4 text-center">Employee Count</th>
                 <th className="px-6 py-4">Subscription Plan</th>
-                <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-50">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-10 text-center text-gray-500">Loading companies...</td>
+                  <td colSpan={7} className="px-6 py-10 text-center text-gray-500">Loading companies...</td>
                 </tr>
               ) : companies.map((company) => (
                 <tr key={company.id} className="hover:bg-gray-50/50 transition-colors group">
@@ -117,16 +116,6 @@ const Company = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm text-gray-600 font-medium">{company.subscriptionPlan}</span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <div className="relative">
-                      <button
-                        disabled
-                        className="text-gray-300 p-1 rounded-full cursor-not-allowed"
-                      >
-                        <MoreVertical size={18} />
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ))}
