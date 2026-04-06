@@ -2,12 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { loginUser, clearError, logout } from '../store/authSlice';
 import { Mail, Lock, Loader2 } from 'lucide-react';
-import logo from '../assets/images/logo.svg';
+import logo from '../assets/images/logo-login.svg';
 import illustrationAsset from '../assets/images/Ilustration-Asset.svg';
 import mainImage from '../assets/images/Image.svg';
 import kit2 from '../assets/images/Kit 2.svg';
 import bgIllustration from '../assets/images/Background-illustration.svg';
-import {  Eye, EyeOff } from 'lucide-react';
+import { Eye, EyeOff } from 'lucide-react';
 
 
 interface LoginProps {
@@ -226,8 +226,8 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
                                         value={formData.password}
                                         onChange={handleChange}
                                         className={`block w-full pl-10 pr-10 py-3 border ${validationErrors.password
-                                                ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
-                                                : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
+                                            ? 'border-red-300 focus:ring-red-500 focus:border-red-500'
+                                            : 'border-gray-300 focus:ring-blue-500 focus:border-blue-500'
                                             } rounded-lg focus:outline-none focus:ring-2 transition-colors`}
                                         placeholder="••••••••"
                                     />
