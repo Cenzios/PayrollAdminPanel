@@ -1,0 +1,190 @@
+import React, { useState } from 'react';
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import axios from 'axios';
+import { useAppSelector } from '../store/hooks';
+
+interface User {
+    id: string;
+    fullName: string;
+    email: string;
+}
+
+interface UserDocument {
+    id: string;
+    userId: string;
+    fileName: string;
+    fileUrl: string;
+    status: string;
+    createdAt: string;
+    user: User;
+}
+
+export default function ManualPayments() {
+    const { token } = useAppSelector((state) => state.auth);
+    const queryClient = useQueryClient();
+    const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
+
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6092/api';
+
+    // Fetch pending manual payments
+    const { data: documents = [], isLoading } = useQuery<UserDocument[]>({
+        queryKey: ['manual-payments'],
+        queryFn: async () => {
+            const response = await axios.get(`${API_BASE_URL}/admin/manual-payments`, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            return response.data.data;
+        },
+        enabled: !!token,
+    });
+
+    const selectedDoc = documents.find(d => d.id === selectedDocId);
+
+    // Approve Mutation
+    const approveMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await axios.post(`${API_BASE_URL}/admin/manual-payments/${id}/approve`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['manual-payments'] });
+            setSelectedDocId(null);
+        }
+    });
+
+    // Reject Mutation
+    const rejectMutation = useMutation({
+        mutationFn: async (id: string) => {
+            await axios.post(`${API_BASE_URL}/admin/manual-payments/${id}/reject`, {}, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+        },
+        onSuccess: () => {
+            queryClient.invalidateQueries({ queryKey: ['manual-payments'] });
+            setSelectedDocId(null);
+        }
+    });
+
+    return (
+        <div className="flex h-[calc(100vh-80px)] gap-6 p-6">
+            {/* Left Sidebar: Pending Reviews */}
+            <div className="w-1/3 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col hidden sm:flex">
+                <div className="p-4 border-b border-gray-100 flex items-center justify-between">
+                    <h2 className="text-lg font-semibold text-gray-800">Pending Reviews</h2>
+                    <span className="bg-blue-500 text-white text-xs px-2 py-1 rounded-full font-medium">
+                        {documents.length} New
+                    </span>
+                </div>
+
+                <div className="flex-1 overflow-y-auto">
+                    {isLoading && <div className="p-4 text-gray-500">Loading...</div>}
+                    {!isLoading && documents.length === 0 && (
+                        <div className="p-4 text-gray-500">No pending reviews.</div>
+                    )}
+
+                    {documents.map((doc) => {
+                        const initials = doc.user.fullName
+                            ? doc.user.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
+                            : 'U';
+
+                        return (
+                            <div
+                                key={doc.id}
+                                onClick={() => setSelectedDocId(doc.id)}
+                                className={`p-4 border-b border-gray-100 cursor-pointer transition-colors duration-200 ${selectedDocId === doc.id ? 'bg-blue-50 border-l-4 border-l-blue-600' : 'hover:bg-gray-50 border-l-4 border-l-transparent'
+                                    }`}
+                            >
+                                <div className="flex items-center gap-3">
+                                    <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
+                                        {initials}
+                                    </div>
+                                    <div className="flex-1 min-w-0">
+                                        <div className="flex justify-between">
+                                            <h3 className="text-sm font-semibold text-gray-900 truncate">
+                                                {doc.user.fullName || 'Unknown User'}
+                                            </h3>
+                                            <span className="text-xs text-gray-500">
+                                                {new Date(doc.createdAt).toLocaleDateString()}
+                                            </span>
+                                        </div>
+                                        <p className="text-xs text-gray-500 truncate">{doc.user.email}</p>
+                                        <div className="mt-1">
+                                            <span className="text-[10px] font-bold text-orange-500 uppercase tracking-wide">
+                                                {doc.status}
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        );
+                    })}
+                </div>
+            </div>
+
+            {/* Right Content: Document Details */}
+            <div className="flex-1 bg-white rounded-xl shadow-sm border border-gray-100 flex flex-col overflow-hidden">
+                {selectedDoc ? (
+                    <>
+                        {/* Header */}
+                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
+                            <div>
+                                <h2 className="text-2xl font-bold text-gray-900">{selectedDoc.user.fullName || 'Unknown User'}</h2>
+                                <p className="text-sm text-gray-500 mt-1">{selectedDoc.user.email} • Uploaded: {new Date(selectedDoc.createdAt).toLocaleString()}</p>
+                            </div>
+                            {/* Could add download PDF button here if needed */}
+                        </div>
+
+                        {/* Document Preview */}
+                        <div className="flex-1 p-6 bg-gray-50 overflow-y-auto flex items-center justify-center">
+                            <div className="bg-white p-4 shadow-sm border border-gray-200 rounded-lg max-w-full">
+                                <div className="flex items-center gap-2 mb-4 text-sm text-gray-600">
+                                    <svg className="w-4 h-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                                    </svg>
+                                    <span>{selectedDoc.fileName}</span>
+                                </div>
+                                <img
+                                    src={selectedDoc.fileUrl}
+                                    alt="Payment Slip"
+                                    className="max-h-[60vh] object-contain rounded border border-gray-100"
+                                />
+                            </div>
+                        </div>
+
+                        {/* Actions */}
+                        <div className="p-4 border-t border-gray-100 flex justify-end gap-3 bg-white">
+                            <button
+                                onClick={() => rejectMutation.mutate(selectedDoc.id)}
+                                disabled={rejectMutation.isPending || approveMutation.isPending}
+                                className="px-6 py-2.5 border border-red-200 text-red-600 font-medium rounded-lg hover:bg-red-50 transition-colors flex items-center gap-2 disabled:opacity-50"
+                            >
+                                <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                </svg>
+                                Reject
+                            </button>
+                            <button
+                                onClick={() => approveMutation.mutate(selectedDoc.id)}
+                                disabled={rejectMutation.isPending || approveMutation.isPending}
+                                className="px-6 py-2.5 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors flex items-center gap-2 disabled:opacity-50 shadow-sm"
+                            >
+                                <svg className="w-5 h-5 bg-white/20 rounded-full p-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+                                </svg>
+                                Approve Payslip
+                            </button>
+                        </div>
+                    </>
+                ) : (
+                    <div className="flex flex-col items-center justify-center h-full text-gray-500">
+                        <svg className="w-16 h-16 text-gray-300 mb-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                        </svg>
+                        <p className="text-lg">Select a review from the left sidebar</p>
+                    </div>
+                )}
+            </div>
+        </div>
+    );
+}

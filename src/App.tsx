@@ -6,6 +6,7 @@ import Company from './pages/Company';
 import Subscriptions from './pages/Subscriptions';
 import Settings from './pages/Settings';
 import Login from './pages/Login';
+import ManualPayments from './pages/ManualPayments';
 import { useAppSelector } from './store/hooks';
 
 function App() {
@@ -33,6 +34,7 @@ function App() {
         <Route path="/company" element={<Company />} />
         <Route path="/subscriptions" element={<Subscriptions />} />
         <Route path="/settings" element={<Settings />} />
+        <Route path="/manual-payments" element={<ManualPayments />} />
         <Route path="*" element={<Navigate to="/dashboard" replace />} />
       </Routes>
     </Layout>
