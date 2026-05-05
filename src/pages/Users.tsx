@@ -16,6 +16,7 @@ interface User {
   employeeCount: number;
   currentPlan: string;
   subscriptionStatus: string;
+  paymentMethod: string;
 }
 
 const Users = () => {
@@ -176,6 +177,7 @@ const Users = () => {
                 <th className="px-6 py-4 text-center">No. of companies</th>
                 <th className="px-6 py-4 text-center">No. of employees</th>
                 <th className="px-6 py-4">Subscription Plan</th>
+                <th className="px-6 py-4">Payment Method</th>
                 <th className="px-6 py-4 text-center">Message</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-center">Actions</th>
@@ -184,7 +186,7 @@ const Users = () => {
             <tbody className="divide-y divide-gray-50">
               {isUsersLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-gray-500">Loading users...</td>
+                  <td colSpan={8} className="px-6 py-10 text-center text-gray-500">Loading users...</td>
                 </tr>
               ) : filteredUsers.map((user) => (
                 <tr
@@ -216,6 +218,14 @@ const Users = () => {
                   <td className="px-6 py-4">
                     <span className="text-sm text-gray-600 font-medium">
                       {user.currentPlan}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${user.paymentMethod === 'Manual'
+                      ? 'bg-amber-50 text-amber-600 border-amber-100'
+                      : 'bg-indigo-50 text-indigo-600 border-indigo-100'
+                      }`}>
+                      {user.paymentMethod}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">
