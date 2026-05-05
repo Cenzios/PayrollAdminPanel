@@ -35,12 +35,17 @@ const Layout = ({ children }: LayoutProps) => {
     dispatch(logout());
   };
 
+  const { title, subtitle } = useAppSelector((state) => state.ui);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <div className="ml-64">
         <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center relative z-20">
-          <div></div>
+          <div>
+            <h2 className="text-xl font-bold text-gray-800">{title}</h2>
+            {subtitle && <p className="text-xs text-gray-500 font-medium">{subtitle}</p>}
+          </div>
           <div className="flex items-center gap-4">
             <div className="relative">
               <button
