@@ -1,6 +1,6 @@
 import { Home, Users, Building2, CreditCard, Settings } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
-import logo from '../assets/images/logo.svg';
+import logo from '../assets/images/logo-login.svg';
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard' },
@@ -22,7 +22,7 @@ const Sidebar = () => {
         <img
           src={logo}
           alt="Payroll Logo"
-          className="h-10 object-contain"
+          className="object-contain"
         />
       </Link>
 
