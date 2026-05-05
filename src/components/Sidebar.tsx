@@ -1,5 +1,5 @@
 import { NavLink } from 'react-router-dom';
-import { Home, Users, Building2, CreditCard, Settings, FileText } from 'lucide-react';
+import { Home, Users, Building2, CreditCard, Settings, FileText, BarChart3 } from 'lucide-react';
 import logo from '../assets/images/logo-login.svg';
 
 const menuItems = [
@@ -8,6 +8,7 @@ const menuItems = [
   { id: 'company', label: 'Company', icon: Building2, path: '/company' },
   { id: 'subscriptions', label: 'Subscriptions', icon: CreditCard, path: '/subscriptions' },
   { id: 'manual-payments', label: 'Manual Payment', icon: FileText, path: '/manual-payments' },
+  { id: 'financials', label: 'Financials', icon: BarChart3, path: '/financials' },
 ];
 
 const Sidebar = () => {
