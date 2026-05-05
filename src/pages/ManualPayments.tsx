@@ -1,7 +1,8 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { useAppSelector } from '../store/hooks';
+import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { setPageTitle } from '../store/uiSlice';
 
 interface User {
     id: string;
@@ -23,7 +24,12 @@ type TabType = 'PENDING' | 'APPROVED';
 
 export default function ManualPayments() {
     const { token } = useAppSelector((state) => state.auth);
+    const dispatch = useAppDispatch();
     const queryClient = useQueryClient();
+
+    useEffect(() => {
+        dispatch(setPageTitle({ title: 'Payroll Review', subtitle: 'Manual Payment Verification' }));
+    }, [dispatch]);
     const [activeTab, setActiveTab] = useState<TabType>('PENDING');
     const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
 
@@ -78,10 +84,6 @@ export default function ManualPayments() {
 
     return (
         <div className="flex flex-col h-[calc(100vh-80px)] bg-gray-50 pb-6 pl-6 pr-6 pt-2">
-            {/* Page Title & Search Bar Area */}
-            <div className="py-4 flex items-center justify-between">
-                <h1 className="text-3xl font-bold text-gray-900">Payroll Review</h1>
-            </div>
 
             <div className="flex flex-1 gap-6 min-h-0">
                 {/* Left Sidebar: Review Lists */}
