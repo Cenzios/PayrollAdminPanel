@@ -4,6 +4,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../utils/axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { updateUserData } from '../store/authSlice';
+import { setPageTitle } from '../store/uiSlice';
 import SuccessModal from '../components/SuccessModal';
 
 const Settings = () => {
@@ -13,6 +14,10 @@ const Settings = () => {
 
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [successConfig, setSuccessConfig] = useState({ title: '', message: '' });
+
+    useEffect(() => {
+        dispatch(setPageTitle({ title: 'Settings', subtitle: 'System Settings' }));
+    }, [dispatch]);
 
     // Profile Form State
     const [profileData, setProfileData] = useState({
@@ -108,10 +113,6 @@ const Settings = () => {
 
     return (
         <div className="space-y-8 animate-in fade-in duration-500">
-            <div>
-                <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Settings</h1>
-                <p className="text-gray-500 font-medium mt-1">System Settings</p>
-            </div>
 
             <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 space-y-8">
                 {/* Profile Header */}

@@ -1,5 +1,7 @@
-import { Search, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
-import { useState } from 'react';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useAppDispatch } from '../store/hooks';
+import { setPageTitle } from '../store/uiSlice';
 import { useQuery } from '@tanstack/react-query';
 import api from '../utils/axios';
 
@@ -19,6 +21,12 @@ const Company = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(setPageTitle({ title: 'Registered Companies', subtitle: 'Details of registered Companies' }));
+  }, [dispatch]);
 
   const { data: companiesData, isLoading } = useQuery({
     queryKey: ['companies', currentPage, rowsPerPage, searchTerm],
@@ -45,10 +53,6 @@ const Company = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-[#1e293b]">Registered Companies</h1>
-        <p className="text-gray-500 mt-1">Details of registered Companies</p>
-      </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50">
