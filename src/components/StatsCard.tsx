@@ -35,7 +35,7 @@ const StatsCard = ({
       </div>
 
       <div className="flex justify-between">
-        <h3 className="text-[26px] font-bold text-gray-800 tracking-tight">{value}</h3>
+        <h3 className="text-2xl font-bold text-gray-800 tracking-tight">{value}</h3>
 
         <div>
 

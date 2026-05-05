@@ -96,7 +96,7 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </header>
 
-        <main className="p-8">{children}</main>
+        <main className="p-4">{children}</main>
       </div>
     </div>
   );
