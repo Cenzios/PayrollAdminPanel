@@ -172,7 +172,7 @@ const Users = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-gray-50/50 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
                 <th className="px-6 py-4">User Name</th>
                 <th className="px-6 py-4 text-center">No. of companies</th>
                 <th className="px-6 py-4 text-center">No. of employees</th>
@@ -183,7 +183,7 @@ const Users = () => {
                 <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-200">
               {isUsersLoading ? (
                 <tr>
                   <td colSpan={8} className="px-6 py-10 text-center text-gray-500">Loading users...</td>

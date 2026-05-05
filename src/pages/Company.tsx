@@ -78,7 +78,7 @@ const Company = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-gray-50/50 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
                 <th className="px-6 py-4">Company</th>
                 <th className="px-6 py-4">Address</th>
                 <th className="px-6 py-4">Phone</th>
@@ -88,7 +88,7 @@ const Company = () => {
                 <th className="px-6 py-4">Subscription Plan</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
                   <td colSpan={7} className="px-6 py-10 text-center text-gray-500">Loading companies...</td>
