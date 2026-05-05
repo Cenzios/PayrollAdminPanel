@@ -24,13 +24,13 @@ const PricingCard = ({
 }: PricingCardProps) => {
   return (
     <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
-      <h3 className="text-xl font-bold text-gray-900 mb-6 tracking-wide">
-        {planName}
+      <h3 className="text-xl font-bold text-gray-900 mb-6 tracking-wide uppercase">
+        {planName} plan
       </h3>
 
       <div className="mb-2">
         <div className="flex items-baseline">
-          <span className="text-4xl font-bold text-gray-900">Rs: {price}</span>
+          <span className="text-4xl font-bold text-blue-700">Rs: {price}</span>
           <span className="ml-2 text-gray-600">{priceLabel}</span>
         </div>
       </div>
