@@ -1,6 +1,6 @@
 import { NavLink } from 'react-router-dom';
 import { Home, Users, Building2, CreditCard, Settings, FileText } from 'lucide-react';
-import logo from '../assets/images/logo.svg';
+import logo from '../assets/images/logo-login.svg';
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: Home, path: '/dashboard' },
@@ -12,7 +12,7 @@ const menuItems = [
 
 const Sidebar = () => {
   return (
-    <div className="w-64 bg-[#000827] h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 overflow-y-auto">
+    <div className="w-64 bg-[#DCEAF7] h-screen flex flex-col border-r border-gray-200 fixed left-0 top-0 overflow-y-auto">
       {/* Logo Section */}
       <div className="p-6 flex items-center justify-center">
         <NavLink to="/dashboard" className="cursor-pointer">
@@ -32,8 +32,8 @@ const Sidebar = () => {
             to={item.path}
             className={({ isActive }) =>
               `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${isActive
-                ? 'bg-white/10 backdrop-blur-md text-white'
-                : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
+                ? 'bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white font-semibold'
+                : 'text-[#67696C] hover:text-gray-700'
               }`
             }
           >
@@ -48,9 +48,9 @@ const Sidebar = () => {
         <NavLink
           to="/settings"
           className={({ isActive }) =>
-            `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] ${isActive
-              ? 'bg-blue-50 text-blue-600 font-medium'
-              : 'text-gray-400 hover:bg-gray-50 hover:text-gray-900'
+            `flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-200 text-[14px] font-semibold ${isActive
+              ? 'bg-gradient-to-r from-[#2054C8] to-[#5C5CB7] text-white font-semibold'
+              : 'text-[#67696C] hover:text-gray-700'
             }`
           }
         >
