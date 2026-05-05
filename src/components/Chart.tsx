@@ -52,7 +52,7 @@ const Chart = ({ data, title }: ChartProps) => {
   // We use the same keys as the backend: 'month' and 'value'
 
   return (
-    <div className="bg-white py-4 px-6 rounded-3xl shadow-sm border border-gray-100 h-[500px] flex flex-col">
+    <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 h-[450px] flex flex-col">
       <div className="flex items-center justify-between mb-8">
         <h3 className="text-xl font-bold text-gray-800">{title}</h3>
 
