@@ -33,7 +33,7 @@ export default function ManualPayments() {
     const [activeTab, setActiveTab] = useState<TabType>('PENDING');
     const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
 
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6092/api';
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
 
     // Fetch payments based on active tab
     const { data: documents = [], isLoading } = useQuery<UserDocument[]>({
