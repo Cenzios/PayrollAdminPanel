@@ -33,7 +33,7 @@ export default function ManualPayments() {
     const [activeTab, setActiveTab] = useState<TabType>('PENDING');
     const [selectedDocId, setSelectedDocId] = useState<string | null>(null);
 
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL;
+    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://payrolladminbackend.cenzios.com/api';
 
     // Fetch payments based on active tab
     const { data: documents = [], isLoading } = useQuery<UserDocument[]>({
