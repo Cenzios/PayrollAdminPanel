@@ -1,5 +1,7 @@
 import { Search, MessageSquare, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAppDispatch } from '../store/hooks';
+import { setPageTitle } from '../store/uiSlice';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../utils/axios';
 import NotificationModal from '../components/NotificationModal';
@@ -14,6 +16,7 @@ interface User {
   employeeCount: number;
   currentPlan: string;
   subscriptionStatus: string;
+  paymentMethod: string;
 }
 
 const Users = () => {
@@ -22,6 +25,12 @@ const Users = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(setPageTitle({ title: 'Registered Users', subtitle: 'Details of registered Users' }));
+  }, [dispatch]);
 
   // Notification Modal State
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -138,10 +147,6 @@ const Users = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-[#1e293b]">Registered Users</h1>
-        <p className="text-gray-500 mt-1">Details of registered Users</p>
-      </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50">
@@ -167,20 +172,21 @@ const Users = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-gray-50/50 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
                 <th className="px-6 py-4">User Name</th>
                 <th className="px-6 py-4 text-center">No. of companies</th>
                 <th className="px-6 py-4 text-center">No. of employees</th>
                 <th className="px-6 py-4">Subscription Plan</th>
+                <th className="px-6 py-4">Payment Method</th>
                 <th className="px-6 py-4 text-center">Message</th>
                 <th className="px-6 py-4">Status</th>
                 <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-200">
               {isUsersLoading ? (
                 <tr>
-                  <td colSpan={7} className="px-6 py-10 text-center text-gray-500">Loading users...</td>
+                  <td colSpan={8} className="px-6 py-10 text-center text-gray-500">Loading users...</td>
                 </tr>
               ) : filteredUsers.map((user) => (
                 <tr
@@ -212,6 +218,14 @@ const Users = () => {
                   <td className="px-6 py-4">
                     <span className="text-sm text-gray-600 font-medium">
                       {user.currentPlan}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">
+                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${user.paymentMethod === 'Manual'
+                      ? 'bg-amber-50 text-amber-600 border-amber-100'
+                      : 'bg-indigo-50 text-indigo-600 border-indigo-100'
+                      }`}>
+                      {user.paymentMethod}
                     </span>
                   </td>
                   <td className="px-6 py-4 text-center">

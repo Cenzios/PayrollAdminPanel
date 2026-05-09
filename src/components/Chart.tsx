@@ -52,45 +52,44 @@ const Chart = ({ data, title }: ChartProps) => {
   // We use the same keys as the backend: 'month' and 'value'
 
   return (
-    <div className="bg-white p-8 rounded-3xl shadow-sm border border-gray-100 h-[450px] flex flex-col">
-      <div className="flex items-center justify-between mb-8">
-        <h3 className="text-xl font-bold text-gray-800">{title}</h3>
+    <div className="bg-white py-4 px-6 rounded-3xl shadow-sm border border-gray-100 h-[500px] flex flex-col">      <div className="flex items-center justify-between mb-8">
+      <h3 className="text-xl font-bold text-gray-800">{title}</h3>
 
-        <div className="relative">
-          <button
-            onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-            className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-sm font-medium rounded-xl transition-colors"
-          >
-            {currentRangeLabel}
-            <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
-          </button>
+      <div className="relative">
+        <button
+          onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+          className="flex items-center gap-2 px-4 py-2 bg-gray-50 hover:bg-gray-100 text-gray-600 text-sm font-medium rounded-xl transition-colors"
+        >
+          {currentRangeLabel}
+          <ChevronDown className={`w-4 h-4 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
+        </button>
 
-          {isDropdownOpen && (
-            <>
-              <div
-                className="fixed inset-0 z-10"
-                onClick={() => setIsDropdownOpen(false)}
-              />
-              <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
-                {ranges.map((range) => (
-                  <button
-                    key={range.value}
-                    onClick={() => {
-                      setCurrentRange(range.value);
-                      setIsDropdownOpen(false);
-                      // Note: In a real app, you'd trigger a refetch here
-                    }}
-                    className={`w-full text-left px-4 py-2 text-sm hover:bg-blue-50 hover:text-blue-600 transition-colors ${currentRange === range.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600'
-                      }`}
-                  >
-                    {range.label}
-                  </button>
-                ))}
-              </div>
-            </>
-          )}
-        </div>
+        {isDropdownOpen && (
+          <>
+            <div
+              className="fixed inset-0 z-10"
+              onClick={() => setIsDropdownOpen(false)}
+            />
+            <div className="absolute right-0 mt-2 w-40 bg-white border border-gray-100 rounded-xl shadow-xl z-20 py-1 overflow-hidden">
+              {ranges.map((range) => (
+                <button
+                  key={range.value}
+                  onClick={() => {
+                    setCurrentRange(range.value);
+                    setIsDropdownOpen(false);
+                    // Note: In a real app, you'd trigger a refetch here
+                  }}
+                  className={`w-full text-left px-4 py-2 text-sm hover:bg-blue-50 hover:text-blue-600 transition-colors ${currentRange === range.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600'
+                    }`}
+                >
+                  {range.label}
+                </button>
+              ))}
+            </div>
+          </>
+        )}
       </div>
+    </div>
 
       <div className="flex-1 relative">
         <ResponsiveContainer width="100%" height="100%">

@@ -1,5 +1,7 @@
-import { Search, ChevronLeft, ChevronRight, MoreVertical } from 'lucide-react';
-import { useState } from 'react';
+import { Search, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { useAppDispatch } from '../store/hooks';
+import { setPageTitle } from '../store/uiSlice';
 import { useQuery } from '@tanstack/react-query';
 import api from '../utils/axios';
 
@@ -19,6 +21,12 @@ const Company = () => {
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(setPageTitle({ title: 'Registered Companies', subtitle: 'Details of registered Companies' }));
+  }, [dispatch]);
 
   const { data: companiesData, isLoading } = useQuery({
     queryKey: ['companies', currentPage, rowsPerPage, searchTerm],
@@ -45,10 +53,6 @@ const Company = () => {
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-[#1e293b]">Registered Companies</h1>
-        <p className="text-gray-500 mt-1">Details of registered Companies</p>
-      </div>
 
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50">
@@ -74,7 +78,7 @@ const Company = () => {
         <div className="overflow-x-auto">
           <table className="w-full text-left">
             <thead>
-              <tr className="bg-gray-50/50 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
                 <th className="px-6 py-4">Company</th>
                 <th className="px-6 py-4">Address</th>
                 <th className="px-6 py-4">Phone</th>
@@ -82,13 +86,12 @@ const Company = () => {
                 <th className="px-6 py-4">Owner</th>
                 <th className="px-6 py-4 text-center">Employee Count</th>
                 <th className="px-6 py-4">Subscription Plan</th>
-                <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-gray-50">
+            <tbody className="divide-y divide-gray-200">
               {isLoading ? (
                 <tr>
-                  <td colSpan={8} className="px-6 py-10 text-center text-gray-500">Loading companies...</td>
+                  <td colSpan={7} className="px-6 py-10 text-center text-gray-500">Loading companies...</td>
                 </tr>
               ) : companies.map((company) => (
                 <tr key={company.id} className="hover:bg-gray-50/50 transition-colors group">
@@ -117,16 +120,6 @@ const Company = () => {
                   </td>
                   <td className="px-6 py-4">
                     <span className="text-sm text-gray-600 font-medium">{company.subscriptionPlan}</span>
-                  </td>
-                  <td className="px-6 py-4 text-center">
-                    <div className="relative">
-                      <button
-                        disabled
-                        className="text-gray-300 p-1 rounded-full cursor-not-allowed"
-                      >
-                        <MoreVertical size={18} />
-                      </button>
-                    </div>
                   </td>
                 </tr>
               ))}

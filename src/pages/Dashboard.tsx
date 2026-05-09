@@ -7,9 +7,19 @@ import QuickActionCard from '../components/QuickActionCard';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 
 import { useNavigate } from 'react-router-dom';
+import { useEffect } from 'react';
+import { useAppDispatch } from '../store/hooks';
+import { setPageTitle } from '../store/uiSlice';
 
 const Dashboard = () => {
   const navigate = useNavigate();
+  const dispatch = useAppDispatch();
+  const userRole = 'System Administrator';
+
+  useEffect(() => {
+    dispatch(setPageTitle({ title: 'Overview', subtitle: userRole }));
+  }, [dispatch]);
+
   const { data: dashboardData, isLoading } = useQuery({
     queryKey: ['dashboardStats'],
     queryFn: async () => {
@@ -34,7 +44,6 @@ const Dashboard = () => {
   };
   const chartData = dashboardData?.chartData || [];
   const recentActivities = dashboardData?.recentActivities || [];
-  const userRole = 'System Administrator';
 
   const formatTime = (dateString: string) => {
     const now = new Date();
@@ -77,15 +86,6 @@ const Dashboard = () => {
 
   return (
     <div className="space-y-8 animate-in fade-in duration-500">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-4xl font-bold text-gray-800 tracking-tight">Overview</h1>
-          <p className="text-gray-500 font-medium mt-1">{userRole}</p>
-        </div>
-        <div className="w-12 h-12 bg-blue-50 rounded-2xl flex items-center justify-center">
-          <Users className="text-blue-600" size={24} />
-        </div>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatsCard
@@ -106,7 +106,7 @@ const Dashboard = () => {
         />
         <StatsCard
           title="MONTHLY INCOME"
-          value={`${stats.monthlyRevenue.toLocaleString()}`}
+          value={`LKR ${stats.monthlyRevenue.toLocaleString()}`}
           icon={DollarSign}
           iconBgColor="bg-[#f0fdf4]"
           iconColor="text-[#22c55e]"
@@ -114,7 +114,7 @@ const Dashboard = () => {
         />
         <StatsCard
           title="TOTAL INCOME"
-          value={stats.totalIncome.toLocaleString()}
+          value={`LKR ${stats.totalIncome.toLocaleString()}`}
           icon={DollarSign}
           iconBgColor="bg-[#fffbeb]"
           iconColor="text-[#f59e0b]"
@@ -157,7 +157,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <QuickActionCard
           title="View Users"
           subtitle="Payroll Users"
