@@ -1,4 +1,6 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useAppDispatch } from '../store/hooks';
+import { setPageTitle } from '../store/uiSlice';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../utils/axios';
 import PricingCard from '../components/PricingCard';
@@ -10,6 +12,12 @@ const Subscriptions = () => {
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
+
+  const dispatch = useAppDispatch();
+
+  useEffect(() => {
+    dispatch(setPageTitle({ title: 'Available Plans' }));
+  }, [dispatch]);
 
   // Hardcoded features as requested
   const getHardcodedFeatures = (planName: string) => {
@@ -75,9 +83,6 @@ const Subscriptions = () => {
 
   return (
     <div className="space-y-8">
-      <div className="flex items-center justify-between">
-        <h1 className="text-3xl font-bold text-gray-900">Subscription Plans</h1>
-      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (

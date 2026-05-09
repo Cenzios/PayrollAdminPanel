@@ -24,14 +24,14 @@ const PricingCard = ({
 }: PricingCardProps) => {
   return (
     <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
-      <h3 className="text-xl font-bold text-gray-900 mb-6 tracking-wide">
-        {planName}
+      <h3 className="text-xl font-semibold text-gray-900 mb-6 tracking-wide uppercase">
+        {planName} plan
       </h3>
 
       <div className="mb-2">
         <div className="flex items-baseline">
-          <span className="text-4xl font-bold text-gray-900">Rs: {price}</span>
-          <span className="ml-2 text-gray-600">{priceLabel}</span>
+          <span className="text-4xl font-bold text-blue-600">Rs: {price}</span>
+          <span className="ml-2 text-gray-600 font-medium">{priceLabel}</span>
         </div>
       </div>
 
@@ -43,8 +43,8 @@ const PricingCard = ({
         {features.map((feature, index) => (
           <div key={index} className="flex items-start space-x-3">
             <div className="flex-shrink-0 mt-0.5">
-              <div className="w-5 h-5 rounded-full bg-blue-100 flex items-center justify-center">
-                <Check className="text-blue-600" size={14} />
+              <div className="w-5 h-5 rounded-full bg-blue-600 flex items-center justify-center">
+                <Check className="text-white" size={14} />
               </div>
             </div>
             <span className="text-sm text-gray-700">{feature.text}</span>

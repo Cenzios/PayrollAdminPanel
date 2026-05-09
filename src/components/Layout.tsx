@@ -1,10 +1,11 @@
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { logout } from '../store/authSlice';
-import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
-import { useEffect } from 'react';
 import { fetchMe } from '../store/authSlice';
+import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
+
 
 
 interface LayoutProps {
@@ -13,6 +14,7 @@ interface LayoutProps {
 
 const Layout = ({ children }: LayoutProps) => {
   const dispatch = useAppDispatch();
+  const navigate = useNavigate();
   const { user, token } = useAppSelector((state) => state.auth);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -33,12 +35,16 @@ const Layout = ({ children }: LayoutProps) => {
     dispatch(logout());
   };
 
+  const { title, subtitle } = useAppSelector((state) => state.ui);
+
   return (
     <div className="min-h-screen bg-gray-50">
       <Sidebar />
       <div className="ml-64">
         <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center relative z-20">
-          <div></div>
+          <div>
+            <h2 className="text-[26px] font-bold text-gray-800">{title}</h2>
+            {subtitle && <p className="text-xs text-gray-500 font-medium tracking-wider">{subtitle}</p>}          </div>
           <div className="flex items-center gap-4">
             <div className="relative">
               <button
@@ -66,7 +72,7 @@ const Layout = ({ children }: LayoutProps) => {
                       className="w-full px-4 py-2 text-left text-sm text-gray-700 hover:bg-gray-50 flex items-center gap-2"
                       onClick={() => {
                         setIsDropdownOpen(false);
-                        // onNavigate('settings');
+                        navigate('/settings');
                       }}
                     >
                       <UserIcon className="h-4 w-4" />
@@ -90,7 +96,7 @@ const Layout = ({ children }: LayoutProps) => {
           </div>
         </header>
 
-        <main className="p-8">{children}</main>
+        <main className="p-4">{children}</main>
       </div>
     </div>
   );
