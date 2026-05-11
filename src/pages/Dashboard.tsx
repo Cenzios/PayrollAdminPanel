@@ -106,7 +106,7 @@ const Dashboard = () => {
         />
         <StatsCard
           title="MONTHLY INCOME"
-          value={`${stats.monthlyRevenue.toLocaleString()}`}
+          value={`LKR ${stats.monthlyRevenue.toLocaleString()}`}
           icon={DollarSign}
           iconBgColor="bg-[#f0fdf4]"
           iconColor="text-[#22c55e]"
@@ -114,7 +114,7 @@ const Dashboard = () => {
         />
         <StatsCard
           title="TOTAL INCOME"
-          value={stats.totalIncome.toLocaleString()}
+          value={`LKR ${stats.totalIncome.toLocaleString()}`}
           icon={DollarSign}
           iconBgColor="bg-[#fffbeb]"
           iconColor="text-[#f59e0b]"
@@ -157,7 +157,7 @@ const Dashboard = () => {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 pt-4">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <QuickActionCard
           title="View Users"
           subtitle="Payroll Users"
