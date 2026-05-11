@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || 'https://payrolladminbackend.cenzios.com/api';
+const BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || 'https://payrolladminproductionserver.cenzios.com/api';
 
 console.log('🔌 API BASE URL:', BASE_URL);
 
