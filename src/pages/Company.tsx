@@ -97,7 +97,7 @@ const Company = () => {
                 <tr key={company.id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium uppercase">
+                      <div className="w-10 h-10 shrink-0 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium uppercase">
                         {company.name.substring(0, 2)}
                       </div>
                       <div className="text-sm font-semibold text-gray-900">{company.name}</div>
