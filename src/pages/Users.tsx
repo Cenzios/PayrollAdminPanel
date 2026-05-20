@@ -191,7 +191,7 @@ const Users = () => {
                 <tr>
                   <td colSpan={8} className="px-6 py-10 text-center text-gray-500">Loading users...</td>
                 </tr>
-              ) : filteredUsers.map((user) => (
+              ) : filteredUsers.map((user, index) => (
                 <tr
                   key={user.id}
                   className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
@@ -262,7 +262,8 @@ const Users = () => {
                       </button>
 
                       {activeMenuId === user.id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10">
+                        <div className={`absolute right-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10 ${filteredUsers.length - index <= 3 ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'
+                          }`}>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
