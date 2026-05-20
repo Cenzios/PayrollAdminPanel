@@ -116,12 +116,13 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
                                         type="number"
                                         value={formData.employeePrice}
                                         onChange={(e) => handleNumberChange('employeePrice', e.target.value)}
+                                        onWheel={(e) => e.currentTarget.blur()}
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-800"
                                     />
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                    {/* <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
                                         <button type="button" onClick={() => increment('employeePrice')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronUp size={16} /></button>
                                         <button type="button" onClick={() => decrement('employeePrice')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronDown size={16} /></button>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
 
@@ -133,12 +134,13 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
                                         type="number"
                                         value={formData.registrationFee}
                                         onChange={(e) => handleNumberChange('registrationFee', e.target.value)}
+                                        onWheel={(e) => e.currentTarget.blur()}
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-800"
                                     />
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                    {/* <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
                                         <button type="button" onClick={() => increment('registrationFee')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronUp size={16} /></button>
                                         <button type="button" onClick={() => decrement('registrationFee')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronDown size={16} /></button>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
 
@@ -150,12 +152,13 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
                                         type="number"
                                         value={formData.maxEmployees}
                                         onChange={(e) => handleNumberChange('maxEmployees', e.target.value)}
+                                        onWheel={(e) => e.currentTarget.blur()}
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-800"
                                     />
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                    {/* <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
                                         <button type="button" onClick={() => increment('maxEmployees')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronUp size={16} /></button>
                                         <button type="button" onClick={() => decrement('maxEmployees')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronDown size={16} /></button>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
 
