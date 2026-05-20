@@ -15,6 +15,7 @@ interface User {
   companyCount: number;
   employeeCount: number;
   currentPlan: string;
+  userStatus: string;
   subscriptionStatus: string;
   paymentMethod: string;
 }
@@ -81,6 +82,8 @@ const Users = () => {
         return 'bg-red-50 text-red-600 border-red-100';
       case 'CANCELLED':
         return 'bg-gray-50 text-gray-600 border-gray-100';
+      case 'SUSPENDED':
+        return 'bg-red-50 text-red-600 border-red-100';
       default:
         return 'bg-gray-50 text-gray-600 border-gray-100';
     }
@@ -130,7 +133,7 @@ const Users = () => {
 
   const handleSuspendUser = (userId: string) => {
     if (window.confirm('Are you sure you want to suspend this user?')) {
-      statusMutation.mutate({ userId, status: 'CANCELLED' });
+      statusMutation.mutate({ userId, status: 'SUSPENDED' });
     }
   };
 
@@ -237,9 +240,14 @@ const Users = () => {
                     </button>
                   </td>
                   <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(user.subscriptionStatus || '')}`}>
-                      {user.subscriptionStatus}
-                    </span>
+                    <div className="flex flex-col gap-1">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border w-fit uppercase ${getStatusStyles(user.userStatus || '')}`}>
+                        Account: {user.userStatus}
+                      </span>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium border w-fit ${getStatusStyles(user.subscriptionStatus || '')}`}>
+                        Sub: {user.subscriptionStatus}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="relative">
