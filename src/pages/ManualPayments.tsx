@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
-import { Search, Eye, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, MoreVertical, Check, X, FileText } from 'lucide-react';
 
 interface User {
     id: string;
@@ -146,7 +146,7 @@ export default function ManualPayments() {
                                 <tr>
                                     <td colSpan={7} className="px-6 py-10 text-center text-gray-400 italic">No records found.</td>
                                 </tr>
-                            ) : filteredDocuments.map((doc) => {
+                            ) : filteredDocuments.map((doc, index) => {
                                 const initials = doc.user.fullName
                                     ? doc.user.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
                                     : 'U';
@@ -202,7 +202,8 @@ export default function ManualPayments() {
                                                 </button>
 
                                                 {activeMenuId === doc.id && (
-                                                    <div className="fixed right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10">
+                                                    <div className={`absolute right-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10 ${filteredDocuments.length - index <= 3 ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'
+                                                        }`}>
                                                         {activeTab === 'PENDING' ? (
                                                             <>
                                                                 <button
