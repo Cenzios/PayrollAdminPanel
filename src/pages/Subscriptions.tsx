@@ -3,12 +3,14 @@ import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../utils/axios';
+import { useToast } from '../components/ToastContext';
 import PricingCard from '../components/PricingCard';
 import EditPlanModal from '../components/EditPlanModal';
 import SuccessModal from '../components/SuccessModal';
 
 const Subscriptions = () => {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
@@ -73,7 +75,7 @@ const Subscriptions = () => {
     },
     onError: (error: any) => {
       console.error('Failed to save plan:', error);
-      alert('Failed to update plan');
+      showToast(error.response?.data?.error || 'Failed to update plan', 'error');
     }
   });
 
