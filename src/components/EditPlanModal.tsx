@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronUp, ChevronDown } from 'lucide-react';
+import { X } from 'lucide-react';
+import { useToast } from './ToastContext';
 
 interface EditPlanModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
     onSave,
     plan,
 }) => {
+    const { showToast } = useToast();
     const [formData, setFormData] = useState({
         name: '',
         employeePrice: 0,
@@ -42,12 +44,12 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
 
         // Validation
         if (!formData.name.trim()) {
-            alert('Plan name cannot be empty');
+            showToast('Plan name cannot be empty', 'warning');
             return;
         }
 
         if (formData.employeePrice < 0 || formData.registrationFee < 0 || formData.maxEmployees < 0) {
-            alert('Values cannot be negative');
+            showToast('Values cannot be negative', 'warning');
             return;
         }
 
@@ -73,14 +75,6 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
     const handleNumberChange = (field: string, value: string) => {
         const num = parseInt(value) || 0;
         setFormData(prev => ({ ...prev, [field]: num }));
-    };
-
-    const increment = (field: string) => {
-        setFormData(prev => ({ ...prev, [field]: (prev[field as keyof typeof prev] as number) + 1 }));
-    };
-
-    const decrement = (field: string) => {
-        setFormData(prev => ({ ...prev, [field]: Math.max(0, (prev[field as keyof typeof prev] as number) - 1) }));
     };
 
     return (

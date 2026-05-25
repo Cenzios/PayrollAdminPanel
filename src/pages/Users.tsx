@@ -7,6 +7,7 @@ import api from '../utils/axios';
 import NotificationModal from '../components/NotificationModal';
 import UserDetailsModal from '../components/UserDetailsModal';
 import UserDetailsModalSkeleton from '../components/UserDetailsModalSkeleton';
+import { useToast } from '../components/ToastContext';
 
 interface User {
   id: string;
@@ -21,6 +22,7 @@ interface User {
 }
 
 const Users = () => {
+  const { showToast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -106,10 +108,10 @@ const Users = () => {
       return response.data;
     },
     onSuccess: () => {
-      alert('Notification sent successfully!');
+      showToast('Notification sent successfully!', 'success');
     },
     onError: (error: any) => {
-      alert(error.response?.data?.error || 'Failed to send notification');
+      showToast(error.response?.data?.error || 'Failed to send notification', 'error');
     }
   });
 
@@ -125,11 +127,13 @@ const Users = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setActiveMenuId(null);
+      showToast('User status updated successfully', 'success');
     },
     onError: (error: any) => {
-      alert(error.response?.data?.error || 'Failed to update user status');
+      showToast(error.response?.data?.error || 'Failed to update user status', 'error');
     }
   });
+
 
   const handleSuspendUser = (userId: string) => {
     if (window.confirm('Are you sure you want to suspend this user?')) {
