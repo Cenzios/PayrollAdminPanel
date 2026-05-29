@@ -106,7 +106,7 @@ const Dashboard = () => {
         />
         <StatsCard
           title="MONTHLY INCOME"
-          value={`LKR ${stats.monthlyRevenue.toLocaleString()}`}
+          value={`Rs ${stats.monthlyRevenue.toLocaleString()}`}
           icon={DollarSign}
           iconBgColor="bg-[#f0fdf4]"
           iconColor="text-[#22c55e]"
@@ -114,7 +114,7 @@ const Dashboard = () => {
         />
         <StatsCard
           title="TOTAL INCOME"
-          value={`LKR ${stats.totalIncome.toLocaleString()}`}
+          value={`Rs ${stats.totalIncome.toLocaleString()}`}
           icon={DollarSign}
           iconBgColor="bg-[#fffbeb]"
           iconColor="text-[#f59e0b]"
