@@ -279,11 +279,27 @@ export default function ManualPayments() {
                             </button>
                         </div>
                         <div className="flex-1 overflow-auto p-4 bg-gray-50 flex items-center justify-center">
-                            <img
+                            {/* <img
                                 src={selectedImageUrl}
                                 alt="Payment proof"
                                 className="max-w-full h-auto rounded-lg shadow-sm"
-                            />
+                            /> */}
+                            {selectedFileName.toLowerCase().endsWith('.pdf') ? (
+                                // PDF viewer
+                                <iframe
+                                    src={selectedImageUrl}
+                                    className="w-full rounded-lg shadow-sm"
+                                    style={{ height: '70vh' }}
+                                    title="PDF Preview"
+                                />
+                            ) : (
+                                // Image viewer
+                                <img
+                                    src={selectedImageUrl}
+                                    alt="Payment proof"
+                                    className="max-w-full h-auto rounded-lg shadow-sm"
+                                />
+                            )}
                         </div>
                         <div className="p-4 border-t border-gray-100 flex justify-end">
                             <button
