@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
-import { Search, Eye, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, MoreVertical, Check, X, FileText } from 'lucide-react';
 
 interface User {
     id: string;
@@ -34,6 +34,7 @@ export default function ManualPayments() {
     const [activeTab, setActiveTab] = useState<TabType>('PENDING');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+    const [selectedFileName, setSelectedFileName] = useState<string>('');
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
     const API_BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || 'https://payrolladminbackend.cenzios.com/api';
@@ -76,6 +77,24 @@ export default function ManualPayments() {
             setActiveMenuId(null);
         }
     });
+
+    const handleDownload = async (url: string, fileName: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = fileName || 'download';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed:', error);
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+    };
 
     const filteredDocuments = documents.filter(doc =>
         doc.user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -146,7 +165,7 @@ export default function ManualPayments() {
                                 <tr>
                                     <td colSpan={7} className="px-6 py-10 text-center text-gray-400 italic">No records found.</td>
                                 </tr>
-                            ) : filteredDocuments.map((doc) => {
+                            ) : filteredDocuments.map((doc, index) => {
                                 const initials = doc.user.fullName
                                     ? doc.user.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
                                     : 'U';
@@ -180,7 +199,10 @@ export default function ManualPayments() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <button
-                                                onClick={() => setSelectedImageUrl(doc.fileUrl)}
+                                                onClick={() => {
+                                                    setSelectedImageUrl(doc.fileUrl);
+                                                    setSelectedFileName(doc.fileName);
+                                                }}
                                                 className="inline-flex items-center justify-center p-2 text-blue-600 transition-colors group/btn"
                                             >
                                                 <p className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase bg-blue-50 text-blue-600 border border-blue-200 hover:text-blue-800 hover:bg-blue-100 transition-colors">View</p>
@@ -202,7 +224,8 @@ export default function ManualPayments() {
                                                 </button>
 
                                                 {activeMenuId === doc.id && (
-                                                    <div className="fixed right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10">
+                                                    <div className={`absolute right-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10 ${filteredDocuments.length - index <= 3 ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'
+                                                        }`}>
                                                         {activeTab === 'PENDING' ? (
                                                             <>
                                                                 <button
@@ -246,7 +269,10 @@ export default function ManualPayments() {
                         <div className="flex items-center justify-between p-4 border-b border-gray-100">
                             <h3 className="text-lg font-semibold text-gray-800">Payment Proof Preview</h3>
                             <button
-                                onClick={() => setSelectedImageUrl(null)}
+                                onClick={() => {
+                                    setSelectedImageUrl(null);
+                                    setSelectedFileName('');
+                                }}
                                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                             >
                                 <X size={20} />
@@ -260,15 +286,12 @@ export default function ManualPayments() {
                             />
                         </div>
                         <div className="p-4 border-t border-gray-100 flex justify-end">
-                            <a
-                                href={selectedImageUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                download
+                            <button
+                                onClick={() => handleDownload(selectedImageUrl!, selectedFileName)}
                                 className="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm"
                             >
                                 Download Original
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>

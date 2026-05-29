@@ -6,11 +6,13 @@ import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { updateUserData } from '../store/authSlice';
 import { setPageTitle } from '../store/uiSlice';
 import SuccessModal from '../components/SuccessModal';
+import { useToast } from '../components/ToastContext';
 
 const Settings = () => {
     const dispatch = useAppDispatch();
     const queryClient = useQueryClient();
     const { user } = useAppSelector((state) => state.auth);
+    const { showToast } = useToast();
 
     const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
     const [successConfig, setSuccessConfig] = useState({ title: '', message: '' });
@@ -72,7 +74,7 @@ const Settings = () => {
             queryClient.invalidateQueries({ queryKey: ['me'] });
         },
         onError: (error: any) => {
-            alert(error.response?.data?.error || 'Failed to update profile');
+            showToast(error.response?.data?.error || 'Failed to update profile', 'error');
         }
     });
 
