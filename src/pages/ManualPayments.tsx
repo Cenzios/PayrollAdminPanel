@@ -147,10 +147,10 @@ export default function ManualPayments() {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                                <th className="px-6 py-4 text-center">Avatar</th>
+                                <th className="px-6 py-4 text-center"></th>
                                 <th className="px-6 py-4">User Details</th>
                                 <th className="px-6 py-4">Date & Time</th>
-                                <th className="px-6 py-4">File Name</th>
+                                <th className="px-6 py-4">Uploaded Document</th>
                                 <th className="px-6 py-4 text-center">Preview</th>
                                 <th className="px-6 py-4 text-center">Status</th>
                                 <th className="px-6 py-4 text-center">Actions</th>
