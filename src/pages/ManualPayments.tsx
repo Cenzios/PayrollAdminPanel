@@ -4,6 +4,11 @@ import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
 import { Search, MoreVertical, Check, X, FileText } from 'lucide-react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface User {
     id: string;
@@ -36,6 +41,10 @@ export default function ManualPayments() {
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [selectedFileName, setSelectedFileName] = useState<string>('');
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const [numPages, setNumPages] = useState<number>(0);
+    const [pageNumber, setPageNumber] = useState<number>(1);
+    const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+    const [pdfLoading, setPdfLoading] = useState(false);
 
     const API_BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || 'https://payrolladminbackend.cenzios.com/api';
 
@@ -77,6 +86,24 @@ export default function ManualPayments() {
             setActiveMenuId(null);
         }
     });
+
+    const loadPdfAsBlob = async (url: string) => {
+        setPdfLoading(true);
+        setPdfBlobUrl(null);
+        try {
+            const response = await fetch(url, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            setPdfBlobUrl(objectUrl);
+        } catch (error) {
+            console.error('PDF fetch failed:', error);
+        } finally {
+            setPdfLoading(false);
+        }
+    };
 
     const handleDownload = async (url: string, fileName: string) => {
         try {
@@ -202,6 +229,9 @@ export default function ManualPayments() {
                                                 onClick={() => {
                                                     setSelectedImageUrl(doc.fileUrl);
                                                     setSelectedFileName(doc.fileName);
+                                                    if (doc.fileName.toLowerCase().endsWith('.pdf')) {
+                                                        loadPdfAsBlob(doc.fileUrl);
+                                                    }
                                                 }}
                                                 className="inline-flex items-center justify-center p-2 text-blue-600 transition-colors group/btn"
                                             >
@@ -272,6 +302,12 @@ export default function ManualPayments() {
                                 onClick={() => {
                                     setSelectedImageUrl(null);
                                     setSelectedFileName('');
+                                    setPageNumber(1);
+                                    setNumPages(0);
+                                    if (pdfBlobUrl) {
+                                        URL.revokeObjectURL(pdfBlobUrl);
+                                        setPdfBlobUrl(null);
+                                    }
                                 }}
                                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                             >
@@ -285,12 +321,14 @@ export default function ManualPayments() {
                                 className="max-w-full h-auto rounded-lg shadow-sm"
                             /> */}
                             {selectedFileName.toLowerCase().endsWith('.pdf') ? (
-                                // PDF viewer
                                 <iframe
-                                    src={selectedImageUrl}
+                                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(selectedImageUrl!)}&embedded=true`}
                                     className="w-full rounded-lg shadow-sm"
                                     style={{ height: '70vh' }}
                                     title="PDF Preview"
+                                    onLoad={(e) => {
+                                        // Google viewer loaded
+                                    }}
                                 />
                             ) : (
                                 // Image viewer
