@@ -129,18 +129,24 @@ export default function ManualPayments() {
         doc.fileName?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const totalRecords = filteredDocuments.length;
+    const paginatedDocuments = filteredDocuments.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+    );
+
     return (
-        <div className="space-y-2 p-2 bg-gray-50 min-h-[calc(100vh-80px)]">
+        <div className="space-y-2 p-2 bg-gray-50 ">
             {/* Tabs / Filter at the top */}
             <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 w-fit">
                 <button
-                    onClick={() => setActiveTab('PENDING')}
+                    onClick={() => { setActiveTab('PENDING'); setCurrentPage(1); }}
                     className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'PENDING' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
                 >
                     Pending Reviews
                 </button>
                 <button
-                    onClick={() => setActiveTab('APPROVED')}
+                    onClick={() => { setActiveTab('APPROVED'); setCurrentPage(1); }}
                     className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'APPROVED' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
                 >
                     Approved History
@@ -170,7 +176,7 @@ export default function ManualPayments() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                <div className="overflow-x-auto overflow-y-auto h-[60vh]">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
@@ -192,7 +198,7 @@ export default function ManualPayments() {
                                 <tr>
                                     <td colSpan={7} className="px-6 py-10 text-center text-gray-400 italic">No records found.</td>
                                 </tr>
-                            ) : filteredDocuments.map((doc, index) => {
+                            ) : paginatedDocuments.map((doc) => {
                                 const initials = doc.user.fullName
                                     ? doc.user.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
                                     : 'U';
@@ -289,6 +295,53 @@ export default function ManualPayments() {
                             })}
                         </tbody>
                     </table>
+                </div>
+
+                <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                    <div className="flex items-center space-x-4">
+                        <span className="text-sm text-gray-500">Rows per page</span>
+                        <select
+                            value={rowsPerPage}
+                            onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                            className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1"
+                        >
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                        </select>
+                        <span className="text-sm text-gray-500">
+                            {((currentPage - 1) * rowsPerPage) + 1}–{Math.min(currentPage * rowsPerPage, totalRecords)} of {totalRecords}
+                        </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                            <ChevronLeft size={18} />
+                        </button>
+                        <div className="flex items-center space-x-1">
+                            {Array.from({ length: Math.ceil(totalRecords / rowsPerPage) }, (_, i) => i + 1)
+                                .slice(Math.max(0, currentPage - 3), Math.min(Math.ceil(totalRecords / rowsPerPage), currentPage + 2))
+                                .map((page) => (
+                                    <button
+                                        key={page}
+                                        onClick={() => setCurrentPage(page)}
+                                        className={`px-3 py-1 rounded-lg text-sm transition-colors ${page === currentPage ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-500 hover:bg-gray-50'}`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+                        </div>
+                        <button
+                            disabled={currentPage >= Math.ceil(totalRecords / rowsPerPage)}
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                            <ChevronRight size={18} />
+                        </button>
+                    </div>
                 </div>
             </div>
 
