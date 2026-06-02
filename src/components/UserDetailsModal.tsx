@@ -40,10 +40,15 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                             <p className="text-gray-500 font-medium">{user.email}</p>
                         </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                        <span className="bg-green-50 text-green-600 text-sm font-semibold px-4 py-1.5 rounded-full border border-green-100">
-                            {currentSubscription?.status || 'Active'}
-                        </span>
+                    <div className="flex items-center space-x-3">
+                        <div className="flex flex-col items-end gap-1">
+                            <span className={`text-[10px] font-bold px-3 py-0.5 rounded-full border uppercase ${user.accountStatus === 'ACTIVE' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                                Account: {user.accountStatus}
+                            </span>
+                            <span className="bg-blue-50 text-blue-600 text-[10px] font-semibold px-3 py-0.5 rounded-full border border-blue-100 uppercase">
+                                Sub: {currentSubscription?.status || 'None'}
+                            </span>
+                        </div>
                         <button
                             onClick={onClose}
                             className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"

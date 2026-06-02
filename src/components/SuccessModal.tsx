@@ -27,9 +27,10 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
                     </div>
 
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
-                    <p className="text-gray-500 font-medium mb-8">
-                        {message}
-                    </p>
+                    <div
+                        className="text-gray-500 font-medium mb-8"
+                        dangerouslySetInnerHTML={{ __html: message }}
+                    />
 
                     <button
                         onClick={onClose}

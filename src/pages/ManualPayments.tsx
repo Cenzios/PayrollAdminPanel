@@ -3,7 +3,12 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
-import { Search, Eye, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, MoreVertical, Check, X, FileText } from 'lucide-react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface User {
     id: string;
@@ -34,12 +39,14 @@ export default function ManualPayments() {
     const [activeTab, setActiveTab] = useState<TabType>('PENDING');
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+    const [selectedFileName, setSelectedFileName] = useState<string>('');
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const [numPages, setNumPages] = useState<number>(0);
+    const [pageNumber, setPageNumber] = useState<number>(1);
+    const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+    const [pdfLoading, setPdfLoading] = useState(false);
 
-    const [rowsPerPage, setRowsPerPage] = useState(10);
-    const [currentPage, setCurrentPage] = useState(1);
-
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6092/api';
+    const API_BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || 'https://payrolladminbackend.cenzios.com/api';
 
     // Fetch payments based on active tab
     const { data: documents = [], isLoading } = useQuery<UserDocument[]>({
@@ -79,6 +86,42 @@ export default function ManualPayments() {
             setActiveMenuId(null);
         }
     });
+
+    const loadPdfAsBlob = async (url: string) => {
+        setPdfLoading(true);
+        setPdfBlobUrl(null);
+        try {
+            const response = await fetch(url, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            setPdfBlobUrl(objectUrl);
+        } catch (error) {
+            console.error('PDF fetch failed:', error);
+        } finally {
+            setPdfLoading(false);
+        }
+    };
+
+    const handleDownload = async (url: string, fileName: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = fileName || 'download';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed:', error);
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+    };
 
     const filteredDocuments = documents.filter(doc =>
         doc.user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -137,10 +180,10 @@ export default function ManualPayments() {
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                                <th className="px-6 py-4 text-center">Avatar</th>
+                                <th className="px-6 py-4 text-center"></th>
                                 <th className="px-6 py-4">User Details</th>
                                 <th className="px-6 py-4">Date & Time</th>
-                                <th className="px-6 py-4">File Name</th>
+                                <th className="px-6 py-4">Uploaded Document</th>
                                 <th className="px-6 py-4 text-center">Preview</th>
                                 <th className="px-6 py-4 text-center">Status</th>
                                 <th className="px-6 py-4 text-center">Actions</th>
@@ -189,7 +232,13 @@ export default function ManualPayments() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <button
-                                                onClick={() => setSelectedImageUrl(doc.fileUrl)}
+                                                onClick={() => {
+                                                    setSelectedImageUrl(doc.fileUrl);
+                                                    setSelectedFileName(doc.fileName);
+                                                    if (doc.fileName.toLowerCase().endsWith('.pdf')) {
+                                                        loadPdfAsBlob(doc.fileUrl);
+                                                    }
+                                                }}
                                                 className="inline-flex items-center justify-center p-2 text-blue-600 transition-colors group/btn"
                                             >
                                                 <p className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase bg-blue-50 text-blue-600 border border-blue-200 hover:text-blue-800 hover:bg-blue-100 transition-colors">View</p>
@@ -211,7 +260,8 @@ export default function ManualPayments() {
                                                 </button>
 
                                                 {activeMenuId === doc.id && (
-                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10">
+                                                    <div className={`absolute right-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10 ${filteredDocuments.length - index <= 3 ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'
+                                                        }`}>
                                                         {activeTab === 'PENDING' ? (
                                                             <>
                                                                 <button
@@ -302,29 +352,53 @@ export default function ManualPayments() {
                         <div className="flex items-center justify-between p-4 border-b border-gray-100">
                             <h3 className="text-lg font-semibold text-gray-800">Payment Proof Preview</h3>
                             <button
-                                onClick={() => setSelectedImageUrl(null)}
+                                onClick={() => {
+                                    setSelectedImageUrl(null);
+                                    setSelectedFileName('');
+                                    setPageNumber(1);
+                                    setNumPages(0);
+                                    if (pdfBlobUrl) {
+                                        URL.revokeObjectURL(pdfBlobUrl);
+                                        setPdfBlobUrl(null);
+                                    }
+                                }}
                                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
                         <div className="flex-1 overflow-auto p-4 bg-gray-50 flex items-center justify-center">
-                            <img
+                            {/* <img
                                 src={selectedImageUrl}
                                 alt="Payment proof"
                                 className="max-w-full h-auto rounded-lg shadow-sm"
-                            />
+                            /> */}
+                            {selectedFileName.toLowerCase().endsWith('.pdf') ? (
+                                <iframe
+                                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(selectedImageUrl!)}&embedded=true`}
+                                    className="w-full rounded-lg shadow-sm"
+                                    style={{ height: '70vh' }}
+                                    title="PDF Preview"
+                                    onLoad={(e) => {
+                                        // Google viewer loaded
+                                    }}
+                                />
+                            ) : (
+                                // Image viewer
+                                <img
+                                    src={selectedImageUrl}
+                                    alt="Payment proof"
+                                    className="max-w-full h-auto rounded-lg shadow-sm"
+                                />
+                            )}
                         </div>
                         <div className="p-4 border-t border-gray-100 flex justify-end">
-                            <a
-                                href={selectedImageUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                download
+                            <button
+                                onClick={() => handleDownload(selectedImageUrl!, selectedFileName)}
                                 className="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm"
                             >
                                 Download Original
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>

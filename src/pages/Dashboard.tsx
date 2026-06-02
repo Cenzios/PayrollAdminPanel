@@ -94,7 +94,7 @@ const Dashboard = () => {
           icon={Users}
           iconBgColor="bg-[#fdf2f2]"
           iconColor="text-[#ef4444]"
-          trend={{ value: 20, isUp: false, label: 'This week' }}
+          trend={{ value: 20, isUp: false, label: 'This Month' }}
         />
         <StatsCard
           title="TOTAL COMPANIES"
@@ -102,23 +102,23 @@ const Dashboard = () => {
           icon={Building2}
           iconBgColor="bg-[#f0f9ff]"
           iconColor="text-[#0ea5e9]"
-          trend={{ value: 55, isUp: true, label: 'This week' }}
+          trend={{ value: 55, isUp: true, label: 'This Month' }}
         />
         <StatsCard
           title="MONTHLY INCOME"
-          value={`LKR ${stats.monthlyRevenue.toLocaleString()}`}
+          value={`Rs ${stats.monthlyRevenue.toLocaleString()}`}
           icon={DollarSign}
           iconBgColor="bg-[#f0fdf4]"
           iconColor="text-[#22c55e]"
-          trend={{ value: 25, isUp: true, label: 'This week' }}
+          trend={{ value: 25, isUp: true, label: 'This Month' }}
         />
         <StatsCard
           title="TOTAL INCOME"
-          value={`LKR ${stats.totalIncome.toLocaleString()}`}
+          value={`Rs ${stats.totalIncome.toLocaleString()}`}
           icon={DollarSign}
           iconBgColor="bg-[#fffbeb]"
           iconColor="text-[#f59e0b]"
-          trend={{ value: 12, isUp: true, label: 'This month' }}
+          trend={{ value: 12, isUp: true, label: 'This Month' }}
         />
       </div>
 
@@ -141,9 +141,10 @@ const Dashboard = () => {
                       <Icon className="text-blue-600" size={18} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 leading-snug">
-                        {getActivityDescription(activity)}
-                      </p>
+                      <div
+                        className="text-sm font-medium text-gray-900 leading-snug"
+                        dangerouslySetInnerHTML={{ __html: getActivityDescription(activity) }}
+                      />
                       <p className="text-xs text-gray-400 mt-1">{formatTime(activity.createdAt)}</p>
                     </div>
                   </div>

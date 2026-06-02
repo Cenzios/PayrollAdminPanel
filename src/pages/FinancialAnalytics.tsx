@@ -70,7 +70,7 @@ const FinancialAnalytics = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatsCard
                     title="TOTAL REVENUE"
-                    value={`LKR ${statsData?.totalRevenue?.toLocaleString() || 0}`}
+                    value={`Rs ${statsData?.totalRevenue?.toLocaleString() || 0}`}
                     icon={DollarSign}
                     iconBgColor="bg-blue-50"
                     iconColor="text-blue-600"
@@ -78,7 +78,7 @@ const FinancialAnalytics = () => {
                 />
                 <StatsCard
                     title="ONLINE REVENUE"
-                    value={`LKR ${statsData?.onlineRevenue?.toLocaleString() || 0}`}
+                    value={`Rs ${statsData?.onlineRevenue?.toLocaleString() || 0}`}
                     icon={CreditCard}
                     iconBgColor="bg-indigo-50"
                     iconColor="text-indigo-600"
@@ -86,7 +86,7 @@ const FinancialAnalytics = () => {
                 />
                 <StatsCard
                     title="MANUAL REVENUE"
-                    value={`LKR ${statsData?.manualRevenue?.toLocaleString() || 0}`}
+                    value={`Rs ${statsData?.manualRevenue?.toLocaleString() || 0}`}
                     icon={Receipt}
                     iconBgColor="bg-amber-50"
                     iconColor="text-amber-600"

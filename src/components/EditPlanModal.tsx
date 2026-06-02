@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { X, ChevronUp, ChevronDown } from 'lucide-react';
+import { X } from 'lucide-react';
+import { useToast } from './ToastContext';
 
 interface EditPlanModalProps {
     isOpen: boolean;
@@ -14,6 +15,7 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
     onSave,
     plan,
 }) => {
+    const { showToast } = useToast();
     const [formData, setFormData] = useState({
         name: '',
         employeePrice: 0,
@@ -42,12 +44,12 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
 
         // Validation
         if (!formData.name.trim()) {
-            alert('Plan name cannot be empty');
+            showToast('Plan name cannot be empty', 'warning');
             return;
         }
 
         if (formData.employeePrice < 0 || formData.registrationFee < 0 || formData.maxEmployees < 0) {
-            alert('Values cannot be negative');
+            showToast('Values cannot be negative', 'warning');
             return;
         }
 
@@ -73,14 +75,6 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
     const handleNumberChange = (field: string, value: string) => {
         const num = parseInt(value) || 0;
         setFormData(prev => ({ ...prev, [field]: num }));
-    };
-
-    const increment = (field: string) => {
-        setFormData(prev => ({ ...prev, [field]: (prev[field as keyof typeof prev] as number) + 1 }));
-    };
-
-    const decrement = (field: string) => {
-        setFormData(prev => ({ ...prev, [field]: Math.max(0, (prev[field as keyof typeof prev] as number) - 1) }));
     };
 
     return (
@@ -116,12 +110,13 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
                                         type="number"
                                         value={formData.employeePrice}
                                         onChange={(e) => handleNumberChange('employeePrice', e.target.value)}
+                                        onWheel={(e) => e.currentTarget.blur()}
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-800"
                                     />
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                    {/* <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
                                         <button type="button" onClick={() => increment('employeePrice')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronUp size={16} /></button>
                                         <button type="button" onClick={() => decrement('employeePrice')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronDown size={16} /></button>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
 
@@ -133,12 +128,13 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
                                         type="number"
                                         value={formData.registrationFee}
                                         onChange={(e) => handleNumberChange('registrationFee', e.target.value)}
+                                        onWheel={(e) => e.currentTarget.blur()}
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-800"
                                     />
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                    {/* <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
                                         <button type="button" onClick={() => increment('registrationFee')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronUp size={16} /></button>
                                         <button type="button" onClick={() => decrement('registrationFee')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronDown size={16} /></button>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
 
@@ -150,12 +146,13 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
                                         type="number"
                                         value={formData.maxEmployees}
                                         onChange={(e) => handleNumberChange('maxEmployees', e.target.value)}
+                                        onWheel={(e) => e.currentTarget.blur()}
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-800"
                                     />
-                                    <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                    {/* <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
                                         <button type="button" onClick={() => increment('maxEmployees')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronUp size={16} /></button>
                                         <button type="button" onClick={() => decrement('maxEmployees')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronDown size={16} /></button>
-                                    </div>
+                                    </div> */}
                                 </div>
                             </div>
 
