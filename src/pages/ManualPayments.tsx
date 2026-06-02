@@ -3,8 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
-import { Search, MoreVertical, Check, X, FileText } from 'lucide-react';
-import { Document, Page, pdfjs } from 'react-pdf';
+import { Search, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react'; import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 
@@ -45,7 +44,10 @@ export default function ManualPayments() {
     const [pageNumber, setPageNumber] = useState<number>(1);
     const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
     const [pdfLoading, setPdfLoading] = useState(false);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
 
+    // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6092/api';
     const API_BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || 'https://payrolladminbackend.cenzios.com/api';
 
     // Fetch payments based on active tab
@@ -198,7 +200,7 @@ export default function ManualPayments() {
                                 <tr>
                                     <td colSpan={7} className="px-6 py-10 text-center text-gray-400 italic">No records found.</td>
                                 </tr>
-                            ) : paginatedDocuments.map((doc) => {
+                            ) : paginatedDocuments.map((doc, index) => {
                                 const initials = doc.user.fullName
                                     ? doc.user.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
                                     : 'U';
