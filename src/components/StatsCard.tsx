@@ -37,14 +37,16 @@ const StatsCard = ({
       <div className="flex justify-between">
         <h3 className="text-xl font-bold text-gray-800 tracking-tight">{value}</h3>
 
-        <div>
-
+        {/* <div>
           {trend && (
             <div className="pt-3">
-              <div
-                className={`flex space-x-1 py-1 px-2 rounded-full text-[10px] font-bold ${trend.isUp ? 'text-green-600 bg-green-50' : 'text-red-600 bg-red-50'
-                  }`}
-              >
+              <div className={`flex space-x-1 py-1 px-2 rounded-full text-[10px] font-bold 
+                  ${trend.isUp
+                  ? 'text-green-600 bg-green-50'
+                  : 'text-red-600 bg-red-50'
+                }`
+              } >
+
                 {trend.isUp ? (
                   <TrendingUp size={12} className="stroke-[3]" />
                 ) : (
@@ -57,7 +59,7 @@ const StatsCard = ({
               </div>
             </div>
           )}
-        </div>
+        </div> */}
       </div>
     </div>
   );

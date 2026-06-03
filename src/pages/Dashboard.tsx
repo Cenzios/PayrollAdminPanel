@@ -94,7 +94,7 @@ const Dashboard = () => {
           icon={Users}
           iconBgColor="bg-[#fdf2f2]"
           iconColor="text-[#ef4444]"
-          trend={{ value: 20, isUp: false, label: 'This Month' }}
+        // trend={{ value: 20, isUp: false, label: 'This Month' }}
         />
         <StatsCard
           title="TOTAL COMPANIES"
@@ -102,7 +102,7 @@ const Dashboard = () => {
           icon={Building2}
           iconBgColor="bg-[#f0f9ff]"
           iconColor="text-[#0ea5e9]"
-          trend={{ value: 55, isUp: true, label: 'This Month' }}
+        // trend={{ value: 55, isUp: true, label: 'This Month' }}
         />
         <StatsCard
           title="MONTHLY INCOME"
@@ -110,7 +110,7 @@ const Dashboard = () => {
           icon={DollarSign}
           iconBgColor="bg-[#f0fdf4]"
           iconColor="text-[#22c55e]"
-          trend={{ value: 25, isUp: true, label: 'This Month' }}
+        // trend={{ value: 25, isUp: true, label: 'This Month' }}
         />
         <StatsCard
           title="TOTAL INCOME"
@@ -118,7 +118,7 @@ const Dashboard = () => {
           icon={DollarSign}
           iconBgColor="bg-[#fffbeb]"
           iconColor="text-[#f59e0b]"
-          trend={{ value: 12, isUp: true, label: 'This Month' }}
+        // trend={{ value: 12, isUp: true, label: 'This Month' }}
         />
       </div>
 

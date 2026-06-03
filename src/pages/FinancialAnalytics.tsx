@@ -3,7 +3,7 @@ import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
 import { useQuery } from '@tanstack/react-query';
 import api from '../utils/axios';
-import { DollarSign, CreditCard, Receipt, AlertCircle, Search, Calendar, ArrowRight, Download, Mail } from 'lucide-react';
+import { DollarSign, CreditCard, Receipt, AlertCircle, Search, Calendar, ArrowRight, Download, Mail, Target } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
 
 const FinancialAnalytics = () => {
@@ -74,7 +74,7 @@ const FinancialAnalytics = () => {
                     icon={DollarSign}
                     iconBgColor="bg-blue-50"
                     iconColor="text-blue-600"
-                    trend={{ value: 12, isUp: true, label: 'vs last month' }}
+                // trend={{ value: 12, isUp: true, label: 'vs last month' }}
                 />
                 <StatsCard
                     title="ONLINE REVENUE"
@@ -82,7 +82,7 @@ const FinancialAnalytics = () => {
                     icon={CreditCard}
                     iconBgColor="bg-indigo-50"
                     iconColor="text-indigo-600"
-                    trend={{ value: onlinePercent.toFixed(1) + '%', isUp: true, label: 'of total' }}
+                // trend={{ value: onlinePercent.toFixed(1) + '%', isUp: true, label: 'of total' }}
                 />
                 <StatsCard
                     title="MANUAL REVENUE"
@@ -90,7 +90,7 @@ const FinancialAnalytics = () => {
                     icon={Receipt}
                     iconBgColor="bg-amber-50"
                     iconColor="text-amber-600"
-                    trend={{ value: manualPercent.toFixed(1) + '%', isUp: false, label: 'of total' }}
+                // trend={{ value: manualPercent.toFixed(1) + '%', isUp: false, label: 'of total' }}
                 />
                 <StatsCard
                     title="OVERDUE INVOICES"
@@ -201,9 +201,9 @@ const FinancialAnalytics = () => {
                                                 <p className="text-sm font-black text-gray-900">LKR {inv.totalAmount.toLocaleString()}</p>
                                                 <p className="text-[10px] text-gray-400 font-medium uppercase mt-0.5">{new Date(inv.createdAt).toLocaleDateString()}</p>
                                             </div>
-                                            <button className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {/* <button className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Download size={14} />
-                                            </button>
+                                            </button> */}
                                         </div>
                                     </div>
                                 ))}
@@ -262,8 +262,8 @@ const FinancialAnalytics = () => {
                     </div>
 
                     <div className="bg-gray-50/50 rounded-3xl flex flex-col justify-center items-center text-center border border-gray-100">
-                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-blue-600 mb-4">
-                            <ArrowRight size={28} />
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-blue-600">
+                            <Target size={40} />
                         </div>
                         <h4 className="text-lg font-bold text-gray-900 mb-2">Targeted Growth</h4>
                         <p className="text-sm text-gray-500 leading-relaxed max-w-[300px]">
@@ -280,3 +280,4 @@ const FinancialAnalytics = () => {
 };
 
 export default FinancialAnalytics;
+
