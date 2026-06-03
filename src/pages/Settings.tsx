@@ -114,11 +114,10 @@ const Settings = () => {
     };
 
     return (
-        <div className="space-y-8 animate-in fade-in duration-500">
-
+        <div className="animate-in fade-in duration-500">
             <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 space-y-8">
                 {/* Profile Header */}
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pb-8 border-b border-gray-50">
+                <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-gray-50">
                     <div className="flex items-center space-x-6">
                         <div className="w-20 h-20 rounded-3xl bg-blue-50 flex items-center justify-center">
                             <User className="text-blue-600" size={40} />
