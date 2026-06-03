@@ -22,7 +22,7 @@ const StatsCard = ({
   iconColor,
 }: StatsCardProps) => {
   return (
-    <div className="bg-white rounded-3xl p-5 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 group">
+    <div className="bg-white rounded-3xl p-4 shadow-sm border border-gray-100 hover:shadow-md transition-all duration-300 group">
       <div className='flex justify-between'>
         <p className="text-[11px] text-gray-400 uppercase tracking-[0.1em] font-bold">
           {title}
@@ -35,7 +35,7 @@ const StatsCard = ({
       </div>
 
       <div className="flex justify-between">
-        <h3 className="text-2xl font-bold text-gray-800 tracking-tight">{value}</h3>
+        <h3 className="text-xl font-bold text-gray-800 tracking-tight">{value}</h3>
 
         <div>
 
