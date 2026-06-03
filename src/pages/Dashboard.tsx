@@ -7,7 +7,7 @@ import QuickActionCard from '../components/QuickActionCard';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
 
@@ -15,15 +15,16 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const userRole = 'System Administrator';
+  const [currentRange, setCurrentRange] = useState('yearly');
 
   useEffect(() => {
     dispatch(setPageTitle({ title: 'Overview', subtitle: userRole }));
   }, [dispatch]);
 
   const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['dashboardStats'],
+    queryKey: ['dashboardStats', currentRange],
     queryFn: async () => {
-      const response = await api.get('/admin/dashboard/summary');
+      const response = await api.get(`/admin/dashboard/summary?range=${currentRange}`);
       return response.data.data;
     },
   });
@@ -124,7 +125,12 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
-          <Chart data={chartData} title="User Registrations" />
+          <Chart 
+            data={chartData} 
+            title="User Registrations" 
+            currentRange={currentRange}
+            onRangeChange={setCurrentRange}
+          />
         </div>
 
         <div className="lg:col-span-2 space-y-4">
