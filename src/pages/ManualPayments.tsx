@@ -48,7 +48,7 @@ export default function ManualPayments() {
     const [currentPage, setCurrentPage] = useState(1);
 
     // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6092/api';
-    const API_BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL || 'https://payrolladminbackend.cenzios.com/api';
+    const API_BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL;
 
     // Fetch payments based on active tab
     const { data: documents = [], isLoading } = useQuery<UserDocument[]>({
