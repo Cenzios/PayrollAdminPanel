@@ -153,8 +153,7 @@ const Users = () => {
   };
 
   return (
-    <div className="space-y-6">
-
+    <div>
       <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
         <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50">
           <div className="flex items-center space-x-2">
@@ -181,12 +180,12 @@ const Users = () => {
             <thead>
               <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
                 <th className="px-6 py-4">User Name</th>
-                <th className="px-6 py-4 text-center">No. of companies</th>
-                <th className="px-6 py-4 text-center">No. of employees</th>
-                <th className="px-6 py-4">Subscription Plan</th>
-                <th className="px-6 py-4">Payment Method</th>
-                <th className="px-6 py-4 text-center">Message</th>
-                <th className="px-6 py-4">Status</th>
+                <th className="px-3 py-4 text-center">No. of companies</th>
+                <th className="px-3 py-4 text-center">No. of employees</th>
+                <th className="px-3 py-4">Subscription Plan</th>
+                <th className="px-3 py-4">Payment Method</th>
+                <th className="px-3 py-4 text-center">Message</th>
+                <th className="px-3 py-4">Status</th>
                 <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
@@ -212,22 +211,22 @@ const Users = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-4 text-center">
                     <span className="text-sm text-gray-600 font-medium">
                       {(user.companyCount ?? 0).toString().padStart(2, '0')}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-4 text-center">
                     <span className="text-sm text-gray-600 font-medium">
                       {user.employeeCount ?? 0}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-4">
                     <span className="text-sm text-gray-600 font-medium">
                       {user.currentPlan}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${user.paymentMethod === 'Manual'
                       ? 'bg-amber-50 text-amber-600 border-amber-100'
                       : 'bg-indigo-50 text-indigo-600 border-indigo-100'
@@ -235,15 +234,15 @@ const Users = () => {
                       {user.paymentMethod}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-4 text-center">
                     <button
                       onClick={(e) => handleOpenModal(user.id, user.fullName || '', e)}
-                      className="text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                      className="text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
                     >
                       <MessageSquare size={18} />
                     </button>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-4">
                     <div className="flex flex-col gap-1">
                       <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border w-fit uppercase ${getStatusStyles(user.userStatus || '')}`}>
                         Account: {user.userStatus}
