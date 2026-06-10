@@ -26,7 +26,7 @@ const server = http.createServer((req, res) => {
     // Handle runtime config
     if (req.url === '/config.js') {
         const config = {
-            VITE_API_BASE_URL: process.env.VITE_API_BASE_URL || 'https://payrolladminbackend.cenzios.com/api',
+            VITE_API_BASE_URL: process.env.VITE_API_BASE_URL,
             VITE_DEBUG_MESSAGE: process.env.VITE_DEBUG_MESSAGE || 'Production Build',
         };
         res.writeHead(200, { 'Content-Type': 'text/javascript' });

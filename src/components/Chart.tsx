@@ -19,6 +19,8 @@ interface ChartDataPoint {
 interface ChartProps {
   data: ChartDataPoint[];
   title: string;
+  currentRange: string;
+  onRangeChange: (range: string) => void;
 }
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -35,9 +37,8 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const Chart = ({ data, title }: ChartProps) => {
+const Chart = ({ data, title, currentRange, onRangeChange }: ChartProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [currentRange, setCurrentRange] = useState('yearly');
 
   const ranges = [
     { label: 'Monthly', value: 'monthly' },
@@ -75,9 +76,8 @@ const Chart = ({ data, title }: ChartProps) => {
                 <button
                   key={range.value}
                   onClick={() => {
-                    setCurrentRange(range.value);
+                    onRangeChange(range.value);
                     setIsDropdownOpen(false);
-                    // Note: In a real app, you'd trigger a refetch here
                   }}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-blue-50 hover:text-blue-600 transition-colors ${currentRange === range.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600'
                     }`}
