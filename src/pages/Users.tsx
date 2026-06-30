@@ -170,15 +170,25 @@ const Users = () => {
               placeholder="Search by user name"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overflow-y-auto max-h-[550px]">
           <table className="w-full text-left">
+            <colgroup>
+              <col className="w-[24%]" />{/* User Name */}
+              <col className="w-[11%]" />{/* No. of companies */}
+              <col className="w-[11%]" />{/* No. of employees */}
+              <col className="w-[13%]" />{/* Subscription Plan */}
+              <col className="w-[12%]" />{/* Payment Method */}
+              <col className="w-[8%]" />{/* Message */}
+              <col className="w-[13%]" />{/* Status */}
+              <col className="w-[8%]" />{/* Actions */}
+            </colgroup>
             <thead>
-              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider sticky top-0 z-10">
                 <th className="px-6 py-4">User Name</th>
                 <th className="px-3 py-4 text-center">No. of companies</th>
                 <th className="px-3 py-4 text-center">No. of employees</th>

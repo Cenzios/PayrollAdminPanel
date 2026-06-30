@@ -7,6 +7,7 @@ import { useToast } from '../components/ToastContext';
 import PricingCard from '../components/PricingCard';
 import EditPlanModal from '../components/EditPlanModal';
 import SuccessModal from '../components/SuccessModal';
+import { createPortal } from 'react-dom';
 
 const Subscriptions = () => {
   const queryClient = useQueryClient();
@@ -103,20 +104,26 @@ const Subscriptions = () => {
       </div>
 
       {/* Edit Plan Modal */}
-      <EditPlanModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleSavePlan}
-        plan={selectedPlan}
-      />
+      {isEditModalOpen && createPortal(
+        <EditPlanModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleSavePlan}
+          plan={selectedPlan}
+        />,
+        document.body
+      )}
 
       {/* Success Confirmation Modal */}
-      <SuccessModal
-        isOpen={isSuccessModalOpen}
-        onClose={() => setIsSuccessModalOpen(false)}
-        title="Success Confirmation"
-        message="Plan details have been updated successfully."
-      />
+      {isSuccessModalOpen && createPortal(
+        <SuccessModal
+          isOpen={isSuccessModalOpen}
+          onClose={() => setIsSuccessModalOpen(false)}
+          title="Success Confirmation"
+          message="Plan details have been updated successfully."
+        />,
+        document.body
+      )}
     </div>
   );
 };

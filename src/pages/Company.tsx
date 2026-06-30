@@ -77,6 +77,15 @@ const Company = () => {
 
         <div className="overflow-x-auto">
           <table className="w-full text-left">
+            <colgroup>
+              <col className="w-[18%]" />{/* Company */}
+              <col className="w-[22%]" />{/* Address */}
+              <col className="w-[13%]" />{/* Phone */}
+              <col className="w-[12%]" />{/* Registered Date */}
+              <col className="w-[15%]" />{/* Owner */}
+              <col className="w-[10%]" />{/* Employee Count */}
+              <col className="w-[10%]" />{/* Subscription Plan */}
+            </colgroup>
             <thead>
               <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
                 <th className="px-6 py-4">Company</th>
@@ -103,7 +112,7 @@ const Company = () => {
                       <div className="text-sm font-semibold text-gray-900">{company.name}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-gray-600 whitespace-normal break-words">
                     {company.address}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
