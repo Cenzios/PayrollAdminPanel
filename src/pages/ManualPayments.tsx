@@ -27,15 +27,17 @@ interface UserDocument {
 
 type TabType = 'PENDING' | 'APPROVED';
 
+const SESSION_KEY = 'manualPayments_activeTab';
+
 export default function ManualPayments() {
     const { token } = useAppSelector((state) => state.auth);
     const dispatch = useAppDispatch();
     const queryClient = useQueryClient();
-
-    useEffect(() => {
-        dispatch(setPageTitle({ title: 'Payroll Review', subtitle: 'Manual Payment Verification' }));
-    }, [dispatch]);
-    const [activeTab, setActiveTab] = useState<TabType>('PENDING');
+    // const [activeTab, setActiveTab] = useState<TabType>('PENDING');
+    const [activeTab, setActiveTab] = useState<TabType>(() => {
+        const saved = sessionStorage.getItem(SESSION_KEY);
+        return (saved === 'PENDING' || saved === 'APPROVED') ? saved : 'PENDING';
+    });
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [selectedFileName, setSelectedFileName] = useState<string>('');
@@ -46,6 +48,16 @@ export default function ManualPayments() {
     const [pdfLoading, setPdfLoading] = useState(false);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
+
+    useEffect(() => {
+        dispatch(setPageTitle({ title: 'Payroll Review', subtitle: 'Manual Payment Verification' }));
+    }, [dispatch]);
+
+    useEffect(() => {
+        sessionStorage.setItem(SESSION_KEY, activeTab);
+    }, [activeTab]);
+
+
 
     // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6092/api';
     const API_BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL;
@@ -138,9 +150,9 @@ export default function ManualPayments() {
     );
 
     return (
-        <div className="space-y-2 p-2 bg-gray-50 ">
+        <div className="flex flex-col h-[calc(100vh-1rem)] space-y-2 p-2 bg-gray-50">
             {/* Tabs / Filter at the top */}
-            <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 w-fit">
+            <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 w-fit shrink-0">
                 <button
                     onClick={() => { setActiveTab('PENDING'); setCurrentPage(1); }}
                     className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'PENDING' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
@@ -155,8 +167,8 @@ export default function ManualPayments() {
                 </button>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50">
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+                <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 shrink-0">
                     <div className="flex items-center space-x-2">
                         <h2 className="text-lg font-semibold text-gray-800">
                             {activeTab === 'PENDING' ? 'Pending Payments' : 'Payment History'}
@@ -178,7 +190,7 @@ export default function ManualPayments() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto overflow-y-auto h-[60vh]">
+                <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 overscroll-contain">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
@@ -299,7 +311,7 @@ export default function ManualPayments() {
                     </table>
                 </div>
 
-                <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+                <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
                     <div className="flex items-center space-x-4">
                         <span className="text-sm text-gray-500">Rows per page</span>
                         <select
