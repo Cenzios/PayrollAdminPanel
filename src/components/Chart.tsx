@@ -21,6 +21,7 @@ interface ChartProps {
   title: string;
   currentRange: string;
   onRangeChange: (range: string) => void;
+  isFetching?: boolean;
 }
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -37,7 +38,7 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const Chart = ({ data, title, currentRange, onRangeChange }: ChartProps) => {
+const Chart = ({ data, title, currentRange, onRangeChange, isFetching }: ChartProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   const ranges = [
@@ -127,6 +128,14 @@ const Chart = ({ data, title, currentRange, onRangeChange }: ChartProps) => {
             />
           </AreaChart>
         </ResponsiveContainer>
+
+        <div
+          className={`absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[1px] rounded-2xl transition-opacity duration-300 ${isFetching ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
+        >
+          <div className="w-8 h-8 border-3 border-blue-100 border-t-blue-500 rounded-full animate-spin" />
+        </div>
+
       </div>
     </div>
   );

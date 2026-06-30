@@ -18,7 +18,7 @@ const Subscriptions = () => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(setPageTitle({ title: 'Available Plans' }));
+    dispatch(setPageTitle({ title: 'Edit Subscription Plans' }));
   }, [dispatch]);
 
   // Hardcoded features as requested

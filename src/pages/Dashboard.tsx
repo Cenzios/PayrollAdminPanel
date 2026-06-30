@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 import { Building2, FileText, AlertCircle, DollarSign, Users, Building } from 'lucide-react';
 import api from '../utils/axios';
 import StatsCard from '../components/StatsCard';
@@ -17,19 +17,36 @@ const Dashboard = () => {
   const userRole = 'System Administrator';
   const [currentRange, setCurrentRange] = useState('yearly');
 
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const otherRanges = ['monthly', '3months', '6months', 'yearly'].filter(r => r !== currentRange);
+
+    otherRanges.forEach((range) => {
+      queryClient.prefetchQuery({
+        queryKey: ['dashboardStats', range],
+        queryFn: async () => {
+          const response = await api.get(`/admin/dashboard/summary?range=${range}`);
+          return response.data.data;
+        },
+      });
+    });
+  }, []);
+
   useEffect(() => {
     dispatch(setPageTitle({ title: 'Overview', subtitle: userRole }));
   }, [dispatch]);
 
-  const { data: dashboardData, isLoading } = useQuery({
+  const { data: dashboardData, isLoading, isFetching } = useQuery({
     queryKey: ['dashboardStats', currentRange],
     queryFn: async () => {
       const response = await api.get(`/admin/dashboard/summary?range=${currentRange}`);
       return response.data.data;
     },
+    placeholderData: keepPreviousData,
   });
 
-  if (isLoading) {
+  if (isLoading && !dashboardData) {
     return <DashboardSkeleton />;
   }
 
@@ -125,20 +142,21 @@ const Dashboard = () => {
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
-          <Chart 
-            data={chartData} 
-            title="User Registrations" 
+          <Chart
+            data={chartData}
+            title="User Registrations"
             currentRange={currentRange}
             onRangeChange={setCurrentRange}
+            isFetching={isFetching && chartData.length === 0}
           />
         </div>
 
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="p-6 border-b border-gray-50 bg-white sticky top-0">
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[500px]">
+            <div className="p-6 border-b border-gray-50 bg-white flex-shrink-0">
               <h3 className="text-lg font-bold text-gray-800">Recent Activities</h3>
             </div>
-            <div className="flex-1 overflow-y-auto max-h-[400px]">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
               {recentActivities.map((activity: any, index: number) => {
                 const Icon = getActivityIcon(activity.action);
                 return (
@@ -167,7 +185,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <QuickActionCard
           title="View Users"
-          subtitle="Payroll Users"
+          subtitle="Registered Users"
           icon={Users}
           iconBgColor="bg-blue-50"
           iconColor="text-blue-600"
