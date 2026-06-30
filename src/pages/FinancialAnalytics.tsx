@@ -104,14 +104,14 @@ const FinancialAnalytics = () => {
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 {/* Overdue Invoices List */}
                 <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-white sticky top-0">
+                    <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-white sticky top-0">
                         <div>
                             <h3 className="text-lg font-bold text-gray-800">Critical Overdue</h3>
                             <p className="text-xs text-gray-500 mt-0.5">Top unpaid invoices requiring attention</p>
                         </div>
                         <span className="bg-red-50 text-red-600 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border border-red-100">Urgent</span>
                     </div>
-                    <div className="flex-1 overflow-y-auto max-h-[500px]">
+                    <div className="flex-1 overflow-y-auto max-h-[400px] overscroll-contain">
                         {isOverdueLoading ? (
                             <div className="p-10 text-center text-gray-400">Loading...</div>
                         ) : overdueData?.length > 0 ? (
@@ -164,7 +164,7 @@ const FinancialAnalytics = () => {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto max-h-[500px]">
+                    <div className="flex-1 overflow-y-auto max-h-[400px] overscroll-contain">
                         {isSearching ? (
                             <div className="p-10 text-center">
                                 <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>

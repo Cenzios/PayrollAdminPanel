@@ -23,7 +23,18 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
         maxEmployees: 0,
         additionalSlotPrice: 150, // Default or from slice
     });
+
     const [isSaving, setIsSaving] = useState(false);
+
+    useEffect(() => {
+        if (isOpen) {
+            const originalOverflow = document.body.style.overflow;
+            document.body.style.overflow = 'hidden';
+            return () => {
+                document.body.style.overflow = originalOverflow;
+            };
+        }
+    }, [isOpen]);
 
     useEffect(() => {
         if (plan) {
@@ -38,6 +49,8 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
     }, [plan]);
 
     if (!isOpen || !plan) return null;
+
+    const isFreeTrial = plan.name?.toLowerCase().includes('free trial');
 
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -139,33 +152,37 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
                             </div>
 
                             {/* Max Employees */}
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-400 mb-2">Max Employees</label>
-                                <div className="relative group">
-                                    <input
-                                        type="number"
-                                        value={formData.maxEmployees}
-                                        onChange={(e) => handleNumberChange('maxEmployees', e.target.value)}
-                                        onWheel={(e) => e.currentTarget.blur()}
-                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-800"
-                                    />
-                                    {/* <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
-                                        <button type="button" onClick={() => increment('maxEmployees')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronUp size={16} /></button>
-                                        <button type="button" onClick={() => decrement('maxEmployees')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronDown size={16} /></button>
-                                    </div> */}
+                            {!isFreeTrial && (
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-400 mb-2">Max Employees</label>
+                                    <div className="relative group">
+                                        <input
+                                            type="number"
+                                            value={formData.maxEmployees}
+                                            onChange={(e) => handleNumberChange('maxEmployees', e.target.value)}
+                                            onWheel={(e) => e.currentTarget.blur()}
+                                            className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-800"
+                                        />
+                                        {/* <div className="absolute right-2 top-1/2 -translate-y-1/2 flex flex-col">
+                                            <button type="button" onClick={() => increment('maxEmployees')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronUp size={16} /></button>
+                                            <button type="button" onClick={() => decrement('maxEmployees')} className="text-gray-400 hover:text-gray-600 p-0.5"><ChevronDown size={16} /></button>
+                                        </div> */}
+                                    </div>
                                 </div>
-                            </div>
+                            )}
 
                             {/* Additional Slot Price (Non-editable as requested) */}
-                            <div>
-                                <label className="block text-sm font-semibold text-gray-400 mb-2">Additional Slot Price</label>
-                                <input
-                                    type="text"
-                                    value={formData.additionalSlotPrice}
-                                    readOnly
-                                    className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none transition-all font-medium text-gray-400 cursor-not-allowed"
-                                />
-                            </div>
+                            {!isFreeTrial && (
+                                <div>
+                                    <label className="block text-sm font-semibold text-gray-400 mb-2">Additional Slot Price</label>
+                                    <input
+                                        type="text"
+                                        value={formData.additionalSlotPrice}
+                                        readOnly
+                                        className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none transition-all font-medium text-gray-400 cursor-not-allowed"
+                                    />
+                                </div>
+                            )}
                         </div>
                     </div>
 
