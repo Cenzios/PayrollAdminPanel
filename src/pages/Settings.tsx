@@ -18,7 +18,7 @@ const Settings = () => {
     const [successConfig, setSuccessConfig] = useState({ title: '', message: '' });
 
     useEffect(() => {
-        dispatch(setPageTitle({ title: 'Settings', subtitle: 'System Settings' }));
+        dispatch(setPageTitle({ title: 'Settings', subtitle: 'Profile Settings' }));
     }, [dispatch]);
 
     // Profile Form State

@@ -84,17 +84,20 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                             </div>
 
                             {/* Extra Slots Taken Card */}
-                            <div className="p-5 bg-gray-50/50 border border-gray-100 rounded-2xl flex items-center space-x-4">
-                                <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500">
-                                    <UserPlus size={24} />
-                                </div>
-                                <div>
-                                    <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Extra Slots Taken</span>
-                                    <div className="flex items-center space-x-1 mt-1">
-                                        <span className="text-sm font-bold text-orange-500">{(currentSubscription?.extraSlots || 0)} slots used</span>
+                            {currentSubscription?.planName !== 'Free Trial' &&
+                                Boolean(currentSubscription?.extraSlots) && (
+                                    <div className="p-5 bg-gray-50/50 border border-gray-100 rounded-2xl flex items-center space-x-4">
+                                        <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500">
+                                            <UserPlus size={24} />
+                                        </div>
+                                        <div>
+                                            <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Extra Slots Taken</span>
+                                            <div className="flex items-center space-x-1 mt-1">
+                                                <span className="text-sm font-bold text-orange-500">{currentSubscription.extraSlots} slots used</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+                                )}
                         </div>
 
                         {/* Right Column - Companies List */}
