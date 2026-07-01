@@ -75,10 +75,10 @@ const Company = () => {
         </div>
 
         <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 [scrollbar-gutter:stable]">
-          <table className="w-full text-left">
+          <table className="w-full text-left table-fixed">
             <colgroup>
-              <col className="w-[18%]" />{/* Company */}
-              <col className="w-[22%]" />{/* Address */}
+              <col className="w-[20%]" />{/* Company */}
+              <col className="w-[20%]" />{/* Address */}
               <col className="w-[13%]" />{/* Phone */}
               <col className="w-[12%]" />{/* Registered Date */}
               <col className="w-[15%]" />{/* Owner */}
