@@ -39,13 +39,14 @@ const Layout = ({ children }: LayoutProps) => {
 
   return (
     <ToastProvider>
-      <div className="min-h-screen bg-gray-50">
+      <div className="h-screen bg-gray-50 overflow-hidden">
         <Sidebar />
-        <div className="ml-64">
-          <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center sticky top-0 z-20">
+        <div className="ml-64 h-screen flex flex-col">
+          <header className="bg-white border-b border-gray-200 px-8 py-4 flex justify-between items-center shrink-0 z-20">
             <div>
               <h2 className="text-[26px] font-bold text-gray-800">{title}</h2>
-              {subtitle && <p className="text-xs text-gray-500 font-medium tracking-wider">{subtitle}</p>}          </div>
+              {subtitle && <p className="text-xs text-gray-500 font-medium tracking-wider">{subtitle}</p>}
+            </div>
             <div className="flex items-center gap-4">
               <div className="relative">
                 <button
@@ -97,7 +98,7 @@ const Layout = ({ children }: LayoutProps) => {
             </div>
           </header>
 
-          <main className="p-4">{children}</main>
+          <main className="p-4 flex-1 overflow-y-auto min-h-0 flex flex-col">{children}</main>
         </div>
         <ToastContainer />
       </div>

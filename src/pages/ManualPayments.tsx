@@ -150,7 +150,7 @@ export default function ManualPayments() {
     );
 
     return (
-        <div className="flex flex-col h-[calc(100vh-1rem)] space-y-2 p-2 bg-gray-50">
+        <div className="flex flex-col h-full space-y-2 p-2 bg-gray-50">
             {/* Tabs / Filter at the top */}
             <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 w-fit shrink-0">
                 <button
@@ -193,7 +193,7 @@ export default function ManualPayments() {
                 <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 overscroll-contain">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                            <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider sticky top-0 z-10">
                                 <th className="px-6 py-4 text-center"></th>
                                 <th className="px-6 py-4">User Details</th>
                                 <th className="px-6 py-4">Date & Time</th>
