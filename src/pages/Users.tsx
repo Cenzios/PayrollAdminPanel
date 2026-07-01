@@ -153,9 +153,9 @@ const Users = () => {
   };
 
   return (
-    <div>
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50">
+    <div className="h-full flex flex-col">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+        <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 shrink-0">
           <div className="flex items-center space-x-2">
             <h2 className="text-lg font-semibold text-gray-800">Registered Users</h2>
             <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-0.5 rounded-full">
@@ -175,7 +175,7 @@ const Users = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto overflow-y-auto max-h-[550px]">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
           <table className="w-full text-left">
             <colgroup>
               <col className="w-[24%]" />{/* User Name */}
@@ -305,7 +305,7 @@ const Users = () => {
           </table>
         </div>
 
-        <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-500">Rows per page</span>
             <select

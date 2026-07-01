@@ -52,10 +52,9 @@ const Company = () => {
   };
 
   return (
-    <div className="space-y-6">
-
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50">
+    <div className="h-full flex flex-col">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+        <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 shrink-0">
           <div className="flex items-center space-x-2">
             <h2 className="text-lg font-semibold text-gray-800">Registered Companies</h2>
             <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-0.5 rounded-full">
@@ -75,7 +74,7 @@ const Company = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
           <table className="w-full text-left">
             <colgroup>
               <col className="w-[18%]" />{/* Company */}
@@ -87,7 +86,7 @@ const Company = () => {
               <col className="w-[10%]" />{/* Subscription Plan */}
             </colgroup>
             <thead>
-              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider sticky top-0 z-10">
                 <th className="px-6 py-4">Company</th>
                 <th className="px-6 py-4">Address</th>
                 <th className="px-6 py-4">Phone</th>
@@ -136,7 +135,7 @@ const Company = () => {
           </table>
         </div>
 
-        <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-500">Rows per page</span>
             <select
