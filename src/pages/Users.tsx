@@ -175,7 +175,7 @@ const Users = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 [scrollbar-gutter:stable]">
           <table className="w-full text-left">
             <colgroup>
               <col className="w-[24%]" />{/* User Name */}

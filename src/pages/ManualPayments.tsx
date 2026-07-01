@@ -190,7 +190,7 @@ export default function ManualPayments() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 overscroll-contain">
+                <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 overscroll-contain [scrollbar-gutter:stable]">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider sticky top-0 z-10">
