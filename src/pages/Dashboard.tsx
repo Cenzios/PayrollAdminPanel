@@ -77,20 +77,38 @@ const Dashboard = () => {
     return `${diffInDays} days ago`;
   };
 
+  const ACTION_VERBS: Record<string, string> = {
+    POST: 'Created',
+    PUT: 'Updated',
+    PATCH: 'Updated',
+    DELETE: 'Deleted',
+    CREATE: 'Created',
+    UPDATE: 'Updated',
+  };
+
+  const formatActivityAction = (action: string) => {
+    const parts = action.split('_');
+    const verb = ACTION_VERBS[parts[0]] ?? parts[0];
+    const subject = parts.slice(1).join(' ').toLowerCase();
+    const subjectTitle = subject.replace(/\b\w/g, (c) => c.toUpperCase());
+    return `${verb} ${subjectTitle}`;
+  };
+
   const getActivityDescription = (activity: any) => {
     switch (activity.action) {
       case 'CREATE_USER':
-        return `New User registered: ${activity.userName}`;
+        return `New User Registered by ${activity.userName}`;
       case 'CREATE_COMPANY':
-        return `New company registered: ${activity.userName}`;
+      case 'POST_COMPANY':
+        return `New Company Registered by ${activity.userName}`;
       case 'CREATE_EMPLOYEE':
-        return `New employee added by ${activity.userName}`;
+        return `New Employee Added by ${activity.userName}`;
       case 'UPDATE_SALARY':
-        return `Salary calculated by ${activity.userName}`;
+        return `Salary Calculated by ${activity.userName}`;
       case 'CREATE_SUBSCRIPTION':
-        return `New subscription purchased by ${activity.userName}`;
+        return `New Subscription Purchased by ${activity.userName}`;
       default:
-        return `${activity.action.replace('_', ' ')} by ${activity.userName}`;
+        return `${formatActivityAction(activity.action)} by ${activity.userName}`;
     }
   };
 
