@@ -104,7 +104,7 @@ const FinancialAnalytics = () => {
             <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
                 {/* Overdue Invoices List */}
                 <div className="lg:col-span-2 bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col">
-                    <div className="p-4 border-b border-gray-50 flex items-center justify-between bg-white sticky top-0">
+                    <div className="p-6 border-b border-gray-50 flex items-center justify-between bg-white sticky top-0">
                         <div>
                             <h3 className="text-lg font-bold text-gray-800">Critical Overdue</h3>
                             <p className="text-xs text-gray-500 mt-0.5">Top unpaid invoices requiring attention</p>
