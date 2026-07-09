@@ -29,10 +29,10 @@ const Company = () => {
   }, [dispatch]);
 
   const { data: companiesData, isLoading } = useQuery({
-    queryKey: ['companies', currentPage, rowsPerPage, searchTerm],
+    queryKey: ['companies', currentPage, rowsPerPage],
     queryFn: async () => {
       const response = await api.get('/admin/companies', {
-        params: { page: currentPage, limit: rowsPerPage, search: searchTerm }
+        params: { page: currentPage, limit: rowsPerPage }
       });
       return response.data;
     },
@@ -42,6 +42,10 @@ const Company = () => {
   const rawData = companiesData?.data;
   const companies = (Array.isArray(rawData) ? rawData : rawData?.companies || []) as CompanyData[];
   const totalCompanies = companiesData?.pagination?.total || rawData?.pagination?.total || 0;
+
+  const filteredCompanies = companies.filter(company => 
+    company.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false
+  );
 
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
@@ -101,7 +105,7 @@ const Company = () => {
                 <tr>
                   <td colSpan={7} className="px-6 py-10 text-center text-gray-500">Loading companies...</td>
                 </tr>
-              ) : companies.map((company) => (
+              ) : filteredCompanies.map((company) => (
                 <tr key={company.id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
