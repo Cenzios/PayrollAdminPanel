@@ -16,8 +16,8 @@ function App() {
   const location = useLocation();
 
   // Debug: Check environment variable imports
-  console.log('🚀 Env Debug Message:', import.meta.env.VITE_DEBUG_MESSAGE);
-  console.log('🔗 Base API URL:', import.meta.env.VITE_API_BASE_URL);
+  console.log('🚀 Env Debug Message:', (window as any).RUNTIME_CONFIG?.VITE_DEBUG_MESSAGE || import.meta.env.VITE_DEBUG_MESSAGE);
+  console.log('🔗 Base API URL:', (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL);
 
   // If no token, show login page only
   if (!token) {

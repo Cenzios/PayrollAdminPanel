@@ -1,20 +1,24 @@
-# Build stage
-FROM node:20 AS build
+FROM node:18-alpine AS builder
 
 WORKDIR /app
 
 COPY package*.json ./
+
 RUN npm install
 
 COPY . .
+
 RUN npm run build
 
-# Nginx stage
-FROM nginx:alpine
+FROM node:18-alpine
 
-# Copy nginx config
-COPY nginx.conf /etc/nginx/conf.d/default.conf
+WORKDIR /app
+
+COPY --from=builder /app/dist ./dist
+COPY server.mjs ./
+
+ENV PORT=80
 
 EXPOSE 80
 
-CMD ["nginx", "-g", "daemon off;"]
+CMD ["node", "server.mjs"]

@@ -19,6 +19,9 @@ interface ChartDataPoint {
 interface ChartProps {
   data: ChartDataPoint[];
   title: string;
+  currentRange: string;
+  onRangeChange: (range: string) => void;
+  isFetching?: boolean;
 }
 
 const CustomTooltip = ({ active, payload }: any) => {
@@ -35,9 +38,8 @@ const CustomTooltip = ({ active, payload }: any) => {
   return null;
 };
 
-const Chart = ({ data, title }: ChartProps) => {
+const Chart = ({ data, title, currentRange, onRangeChange, isFetching }: ChartProps) => {
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
-  const [currentRange, setCurrentRange] = useState('yearly');
 
   const ranges = [
     { label: 'Monthly', value: 'monthly' },
@@ -75,9 +77,8 @@ const Chart = ({ data, title }: ChartProps) => {
                 <button
                   key={range.value}
                   onClick={() => {
-                    setCurrentRange(range.value);
+                    onRangeChange(range.value);
                     setIsDropdownOpen(false);
-                    // Note: In a real app, you'd trigger a refetch here
                   }}
                   className={`w-full text-left px-4 py-2 text-sm hover:bg-blue-50 hover:text-blue-600 transition-colors ${currentRange === range.value ? 'bg-blue-50 text-blue-600 font-medium' : 'text-gray-600'
                     }`}
@@ -127,6 +128,14 @@ const Chart = ({ data, title }: ChartProps) => {
             />
           </AreaChart>
         </ResponsiveContainer>
+
+        <div
+          className={`absolute inset-0 flex items-center justify-center bg-white/60 backdrop-blur-[1px] rounded-2xl transition-opacity duration-300 ${isFetching ? 'opacity-100' : 'opacity-0 pointer-events-none'
+            }`}
+        >
+          <div className="w-8 h-8 border-3 border-blue-100 border-t-blue-500 rounded-full animate-spin" />
+        </div>
+
       </div>
     </div>
   );
