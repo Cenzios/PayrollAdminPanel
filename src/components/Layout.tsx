@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { logout } from '../store/authSlice';
@@ -15,6 +15,7 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, token } = useAppSelector((state) => state.auth);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -32,7 +33,14 @@ const Layout = ({ children }: LayoutProps) => {
     .toUpperCase();
 
   const handleLogout = () => {
+    // Clear the token first
     dispatch(logout());
+    
+    // Force navigation to login and replace history
+    navigate('/login', { replace: true });
+    
+    // Close dropdown
+    setIsDropdownOpen(false);
   };
 
   const { title, subtitle } = useAppSelector((state) => state.ui);
@@ -105,6 +113,5 @@ const Layout = ({ children }: LayoutProps) => {
     </ToastProvider>
   );
 };
-
 
 export default Layout;
