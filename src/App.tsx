@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
@@ -9,9 +9,11 @@ import Login from './pages/Login';
 import ManualPayments from './pages/ManualPayments';
 import FinancialAnalytics from './pages/FinancialAnalytics';
 import { useAppSelector } from './store/hooks';
+import { useEffect } from 'react';
 
 function App() {
   const { token } = useAppSelector((state) => state.auth);
+  const location = useLocation();
 
   // Debug: Check environment variable imports
   console.log('🚀 Env Debug Message:', import.meta.env.VITE_DEBUG_MESSAGE);
@@ -21,7 +23,8 @@ function App() {
   if (!token) {
     return (
       <Routes>
-        <Route path="*" element={<Login onLoginSuccess={() => { }} />} />
+        <Route path="/login" element={<Login onLoginSuccess={() => { }} />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
@@ -30,6 +33,7 @@ function App() {
     <Layout>
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/users" element={<Users />} />
         <Route path="/company" element={<Company />} />

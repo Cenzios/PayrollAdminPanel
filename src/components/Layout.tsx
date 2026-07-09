@@ -1,12 +1,10 @@
 import { ReactNode, useState, useEffect } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { logout } from '../store/authSlice';
 import { fetchMe } from '../store/authSlice';
 import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
-
-
 
 interface LayoutProps {
   children: ReactNode;
@@ -15,6 +13,7 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
+  const location = useLocation();
   const { user, token } = useAppSelector((state) => state.auth);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -32,7 +31,14 @@ const Layout = ({ children }: LayoutProps) => {
     .toUpperCase();
 
   const handleLogout = () => {
+    // Clear the token first
     dispatch(logout());
+    
+    // Force navigation to login and replace history
+    navigate('/login', { replace: true });
+    
+    // Close dropdown
+    setIsDropdownOpen(false);
   };
 
   const { title, subtitle } = useAppSelector((state) => state.ui);
@@ -82,7 +88,6 @@ const Layout = ({ children }: LayoutProps) => {
                     <button
                       className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                       onClick={() => {
-                        setIsDropdownOpen(false);
                         handleLogout();
                       }}
                     >
