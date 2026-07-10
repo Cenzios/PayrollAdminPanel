@@ -3,9 +3,11 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
-import { Search, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react'; import { Document, Page, pdfjs } from 'react-pdf';
+import { Search, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
+import { useToast } from '../components/ToastContext';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -33,6 +35,7 @@ export default function ManualPayments() {
     const { token } = useAppSelector((state) => state.auth);
     const dispatch = useAppDispatch();
     const queryClient = useQueryClient();
+    const { showToast } = useToast();
     // const [activeTab, setActiveTab] = useState<TabType>('PENDING');
     const [activeTab, setActiveTab] = useState<TabType>(() => {
         const saved = sessionStorage.getItem(SESSION_KEY);
@@ -82,9 +85,16 @@ export default function ManualPayments() {
             });
         },
         onSuccess: () => {
+            showToast('Payment approved successfully!', 'success');
             queryClient.invalidateQueries({ queryKey: ['manual-payments', 'PENDING'] });
             queryClient.invalidateQueries({ queryKey: ['manual-payments', 'APPROVED'] });
             setActiveMenuId(null);
+        },
+        onError: (error: any) => {
+            showToast(
+                error.response?.data?.message || 'Failed to approve payment',
+                'error'
+            );
         }
     });
 
@@ -96,8 +106,15 @@ export default function ManualPayments() {
             });
         },
         onSuccess: () => {
+            showToast('⚠️ Payment rejected successfully!', 'success');
             queryClient.invalidateQueries({ queryKey: ['manual-payments', 'PENDING'] });
             setActiveMenuId(null);
+        },
+        onError: (error: any) => {
+            showToast(
+                error.response?.data?.message || 'Failed to reject payment',
+                'error'
+            );
         }
     });
 
