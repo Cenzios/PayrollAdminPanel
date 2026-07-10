@@ -1,5 +1,5 @@
 import { ReactNode, useState, useEffect } from 'react';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import Sidebar from './Sidebar';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
 import { logout } from '../store/authSlice';
@@ -15,7 +15,6 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const location = useLocation();
   const { user, token } = useAppSelector((state) => state.auth);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -25,12 +24,14 @@ const Layout = ({ children }: LayoutProps) => {
     }
   }, [dispatch, token, user]);
 
-  const userName = user?.fullName || "Admin User";
+  const userName = user?.fullName || '';
   const initials = userName
-    .split(' ')
-    .map((n: string) => n[0])
-    .join('')
-    .toUpperCase();
+    ? userName
+        .split(' ')
+        .map((n: string) => n[0])
+        .join('')
+        .toUpperCase()
+    : '';
 
   const handleLogout = () => {
     // Clear the token first
@@ -65,8 +66,10 @@ const Layout = ({ children }: LayoutProps) => {
                     {initials}
                   </div>
                   <div className="hidden md:block text-left">
-                    <p className="text-sm font-semibold text-gray-900">{userName}</p>
-                    <p className="text-xs text-gray-500">{user?.role || 'Admin'}</p>
+                    <p className="text-sm font-semibold text-gray-900">
+                      {userName || 'Loading...'}
+                    </p>
+                    <p className="text-xs text-gray-500">{user?.role || 'Loading...'}</p>
                   </div>
                   <ChevronDown className={`h-4 w-4 text-gray-500 transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
                 </button>
