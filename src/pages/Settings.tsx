@@ -301,21 +301,45 @@ const Settings = () => {
                   type={showPasswords.current ? "text" : "password"}
                   value={passwordData.currentPassword}
                   placeholder="Enter Current Password"
-                  autoComplete="off" // Prevents browser autofill
+                  autoComplete="off"
                   onChange={(e) => {
                     const value = e.target.value;
                     setPasswordData({
                       ...passwordData,
                       currentPassword: value,
                     });
-                    
+
+                    // Clear current password error when typing
                     if (value && value.length > 0) {
                       setPasswordErrors({
                         ...passwordErrors,
                         currentPassword: "",
                       });
                     }
-                    
+
+                    // IMPORTANT: Re-validate new password when current password changes
+                    if (passwordData.newPassword) {
+                      let newError = "";
+                      
+                      // Check if new password is same as current password
+                      if (value && value === passwordData.newPassword) {
+                        newError = "New password must be different from current password";
+                      } 
+                      // If not same, check password strength
+                      else if (value) {
+                        const validation = validatePassword(passwordData.newPassword);
+                        if (!validation.isValid) {
+                          newError = validation.errors[0];
+                        }
+                      }
+                      
+                      setPasswordErrors((prev) => ({
+                        ...prev,
+                        newPassword: newError,
+                      }));
+                    }
+
+                    // Also re-validate confirm password when current password changes
                     if (passwordData.confirmPassword) {
                       const confirmError = validateConfirmPassword(
                         passwordData.confirmPassword,
@@ -366,7 +390,7 @@ const Settings = () => {
                   type={showPasswords.new ? "text" : "password"}
                   value={passwordData.newPassword}
                   placeholder="Enter New Password"
-                  autoComplete="new-password" // Prevents browser from filling
+                  autoComplete="new-password"
                   onChange={(e) => {
                     const value = e.target.value;
                     setPasswordData({ ...passwordData, newPassword: value });
@@ -436,7 +460,7 @@ const Settings = () => {
                   type={showPasswords.confirm ? "text" : "password"}
                   value={passwordData.confirmPassword}
                   placeholder="Confirm New Password"
-                  autoComplete="new-password" // Prevents browser from filling
+                  autoComplete="new-password"
                   onChange={(e) => {
                     const value = e.target.value;
                     setPasswordData({
