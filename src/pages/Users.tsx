@@ -7,6 +7,7 @@ import api from '../utils/axios';
 import NotificationModal from '../components/NotificationModal';
 import UserDetailsModal from '../components/UserDetailsModal';
 import UserDetailsModalSkeleton from '../components/UserDetailsModalSkeleton';
+import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../components/ToastContext';
 
 interface User {
@@ -42,6 +43,16 @@ const Users = () => {
   // User Details Modal State
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    userId: string | null;
+    action: 'suspend' | 'activate' | null;
+  }>({
+    isOpen: false,
+    userId: null,
+    action: null,
+  });
 
   // Fetch users with data from API
   const { data: usersData, isLoading: isUsersLoading } = useQuery({
@@ -127,24 +138,36 @@ const Users = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setActiveMenuId(null);
-      showToast('User status updated successfully', 'success');
+      showToast(
+        confirmState.action === 'suspend'
+          ? 'User suspended successfully'
+          : 'User activated successfully',
+        'success'
+      );
+      setConfirmState({ isOpen: false, userId: null, action: null });
     },
     onError: (error: any) => {
       showToast(error.response?.data?.error || 'Failed to update user status', 'error');
+      setConfirmState({ isOpen: false, userId: null, action: null });
     }
   });
 
 
   const handleSuspendUser = (userId: string) => {
-    if (window.confirm('Are you sure you want to suspend this user?')) {
-      statusMutation.mutate({ userId, status: 'SUSPENDED' });
-    }
+    setConfirmState({ isOpen: true, userId, action: 'suspend' });
   };
 
   const handleActivateUser = (userId: string) => {
-    if (window.confirm('Are you sure you want to activate this user?')) {
-      statusMutation.mutate({ userId, status: 'ACTIVE' });
-    }
+    setConfirmState({ isOpen: true, userId, action: 'activate' });
+  };
+
+  const handleConfirmStatusChange = () => {
+    if (!confirmState.userId || !confirmState.action) return;
+
+    statusMutation.mutate({
+      userId: confirmState.userId,
+      status: confirmState.action === 'suspend' ? 'SUSPENDED' : 'ACTIVE'
+    });
   };
 
   const handleCloseDetails = () => {
@@ -380,6 +403,21 @@ const Users = () => {
       <UserDetailsModalSkeleton
         isOpen={isDetailsModalOpen && isUserDetailsLoading}
         onClose={handleCloseDetails}
+      />
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.action === 'suspend' ? 'Suspend user' : 'Activate user'}
+        message={
+          confirmState.action === 'suspend'
+            ? 'This will suspend the selected user and prevent them from accessing the system until reactivated.'
+            : 'This will restore access for the selected user.'
+        }
+        confirmLabel={confirmState.action === 'suspend' ? 'Suspend' : 'Activate'}
+        cancelLabel="Cancel"
+        confirmTone={confirmState.action === 'suspend' ? 'danger' : 'primary'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setConfirmState({ isOpen: false, userId: null, action: null })}
       />
 
       {/* Click outside to close menu backdrop */}
