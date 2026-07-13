@@ -4,12 +4,7 @@ import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
 import { Search, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Document, Page, pdfjs } from 'react-pdf';
-import 'react-pdf/dist/Page/AnnotationLayer.css';
-import 'react-pdf/dist/Page/TextLayer.css';
 import { useToast } from '../components/ToastContext';
-
-pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface User {
     id: string;
@@ -36,7 +31,6 @@ export default function ManualPayments() {
     const dispatch = useAppDispatch();
     const queryClient = useQueryClient();
     const { showToast } = useToast();
-    // const [activeTab, setActiveTab] = useState<TabType>('PENDING');
     const [activeTab, setActiveTab] = useState<TabType>(() => {
         const saved = sessionStorage.getItem(SESSION_KEY);
         return (saved === 'PENDING' || saved === 'APPROVED') ? saved : 'PENDING';
@@ -45,10 +39,6 @@ export default function ManualPayments() {
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [selectedFileName, setSelectedFileName] = useState<string>('');
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-    const [numPages, setNumPages] = useState<number>(0);
-    const [pageNumber, setPageNumber] = useState<number>(1);
-    const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
-    const [pdfLoading, setPdfLoading] = useState(false);
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -60,12 +50,8 @@ export default function ManualPayments() {
         sessionStorage.setItem(SESSION_KEY, activeTab);
     }, [activeTab]);
 
-
-
-    // const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:6092/api';
     const API_BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL;
 
-    // Fetch payments based on active tab
     const { data: documents = [], isLoading } = useQuery<UserDocument[]>({
         queryKey: ['manual-payments', activeTab],
         queryFn: async () => {
@@ -77,7 +63,6 @@ export default function ManualPayments() {
         enabled: !!token,
     });
 
-    // Approve Mutation
     const approveMutation = useMutation({
         mutationFn: async (id: string) => {
             await axios.post(`${API_BASE_URL}/admin/manual-payments/${id}/approve`, {}, {
@@ -98,7 +83,6 @@ export default function ManualPayments() {
         }
     });
 
-    // Reject Mutation
     const rejectMutation = useMutation({
         mutationFn: async (id: string) => {
             await axios.post(`${API_BASE_URL}/admin/manual-payments/${id}/reject`, {}, {
@@ -117,24 +101,6 @@ export default function ManualPayments() {
             );
         }
     });
-
-    const loadPdfAsBlob = async (url: string) => {
-        setPdfLoading(true);
-        setPdfBlobUrl(null);
-        try {
-            const response = await fetch(url, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
-            if (!response.ok) throw new Error(`HTTP ${response.status}`);
-            const blob = await response.blob();
-            const objectUrl = URL.createObjectURL(blob);
-            setPdfBlobUrl(objectUrl);
-        } catch (error) {
-            console.error('PDF fetch failed:', error);
-        } finally {
-            setPdfLoading(false);
-        }
-    };
 
     const handleDownload = async (url: string, fileName: string) => {
         try {
@@ -168,7 +134,7 @@ export default function ManualPayments() {
 
     return (
         <div className="flex flex-col h-full space-y-2 p-2 bg-gray-50">
-            {/* Tabs / Filter at the top */}
+            {/* Tabs */}
             <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 w-fit shrink-0">
                 <button
                     onClick={() => { setActiveTab('PENDING'); setCurrentPage(1); }}
@@ -184,7 +150,9 @@ export default function ManualPayments() {
                 </button>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+            {/* Table Container */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col flex-1 min-h-0">
+                {/* Header */}
                 <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 shrink-0">
                     <div className="flex items-center space-x-2">
                         <h2 className="text-lg font-semibold text-gray-800">
@@ -194,7 +162,6 @@ export default function ManualPayments() {
                             {filteredDocuments.length} records
                         </span>
                     </div>
-
                     <div className="relative w-full md:w-80">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
@@ -207,7 +174,8 @@ export default function ManualPayments() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 overscroll-contain [scrollbar-gutter:stable]">
+                {/* Table */}
+                <div className="overflow-x-auto flex-1 min-h-0 overscroll-contain [scrollbar-gutter:stable]">
                     <table className="w-full text-left">
                         <thead>
                             <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider sticky top-0 z-10">
@@ -229,7 +197,7 @@ export default function ManualPayments() {
                                 <tr>
                                     <td colSpan={7} className="px-6 py-10 text-center text-gray-400 italic">No records found.</td>
                                 </tr>
-                            ) : paginatedDocuments.map((doc, index) => {
+                            ) : paginatedDocuments.map((doc) => {
                                 const initials = doc.user.fullName
                                     ? doc.user.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
                                     : 'U';
@@ -266,9 +234,6 @@ export default function ManualPayments() {
                                                 onClick={() => {
                                                     setSelectedImageUrl(doc.fileUrl);
                                                     setSelectedFileName(doc.fileName);
-                                                    if (doc.fileName.toLowerCase().endsWith('.pdf')) {
-                                                        loadPdfAsBlob(doc.fileUrl);
-                                                    }
                                                 }}
                                                 className="inline-flex items-center justify-center p-2 text-blue-600 transition-colors group/btn"
                                             >
@@ -291,8 +256,7 @@ export default function ManualPayments() {
                                                 </button>
 
                                                 {activeMenuId === doc.id && (
-                                                    <div className={`absolute right-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10 ${filteredDocuments.length - index <= 3 ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'
-                                                        }`}>
+                                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-[999] origin-top-right">
                                                         {activeTab === 'PENDING' ? (
                                                             <>
                                                                 <button
@@ -328,6 +292,7 @@ export default function ManualPayments() {
                     </table>
                 </div>
 
+                {/* Pagination */}
                 <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
                     <div className="flex items-center space-x-4">
                         <span className="text-sm text-gray-500">Rows per page</span>
@@ -386,12 +351,6 @@ export default function ManualPayments() {
                                 onClick={() => {
                                     setSelectedImageUrl(null);
                                     setSelectedFileName('');
-                                    setPageNumber(1);
-                                    setNumPages(0);
-                                    if (pdfBlobUrl) {
-                                        URL.revokeObjectURL(pdfBlobUrl);
-                                        setPdfBlobUrl(null);
-                                    }
                                 }}
                                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                             >
@@ -399,23 +358,14 @@ export default function ManualPayments() {
                             </button>
                         </div>
                         <div className="flex-1 overflow-auto p-4 bg-gray-50 flex items-center justify-center">
-                            {/* <img
-                                src={selectedImageUrl}
-                                alt="Payment proof"
-                                className="max-w-full h-auto rounded-lg shadow-sm"
-                            /> */}
                             {selectedFileName.toLowerCase().endsWith('.pdf') ? (
                                 <iframe
                                     src={`https://docs.google.com/viewer?url=${encodeURIComponent(selectedImageUrl!)}&embedded=true`}
                                     className="w-full rounded-lg shadow-sm"
                                     style={{ height: '70vh' }}
                                     title="PDF Preview"
-                                    onLoad={(e) => {
-                                        // Google viewer loaded
-                                    }}
                                 />
                             ) : (
-                                // Image viewer
                                 <img
                                     src={selectedImageUrl}
                                     alt="Payment proof"
