@@ -3,12 +3,15 @@ import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import api from '../utils/axios';
+import { useToast } from '../components/ToastContext';
 import PricingCard from '../components/PricingCard';
 import EditPlanModal from '../components/EditPlanModal';
 import SuccessModal from '../components/SuccessModal';
+import { createPortal } from 'react-dom';
 
 const Subscriptions = () => {
   const queryClient = useQueryClient();
+  const { showToast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
   const [selectedPlan, setSelectedPlan] = useState<any>(null);
@@ -16,7 +19,7 @@ const Subscriptions = () => {
   const dispatch = useAppDispatch();
 
   useEffect(() => {
-    dispatch(setPageTitle({ title: 'Available Plans' }));
+    dispatch(setPageTitle({ title: 'Edit Subscription Plans' }));
   }, [dispatch]);
 
   // Hardcoded features as requested
@@ -31,7 +34,7 @@ const Subscriptions = () => {
     ];
 
     if (planName.toUpperCase().includes('BASIC')) {
-      return [{ text: 'Payroll processing for 0 - 29 employees', included: true }, ...commonFeatures];
+      return [{ text: 'Payroll processing for unlimited employees', included: true }, ...commonFeatures];
     } else if (planName.toUpperCase().includes('PROFESSIONAL')) {
       return [{ text: 'Payroll processing for 30 - 99 employees', included: true }, ...commonFeatures];
     } else {
@@ -73,7 +76,7 @@ const Subscriptions = () => {
     },
     onError: (error: any) => {
       console.error('Failed to save plan:', error);
-      alert('Failed to update plan');
+      showToast(error.response?.data?.error || 'Failed to update plan', 'error');
     }
   });
 
@@ -101,20 +104,26 @@ const Subscriptions = () => {
       </div>
 
       {/* Edit Plan Modal */}
-      <EditPlanModal
-        isOpen={isEditModalOpen}
-        onClose={() => setIsEditModalOpen(false)}
-        onSave={handleSavePlan}
-        plan={selectedPlan}
-      />
+      {isEditModalOpen && createPortal(
+        <EditPlanModal
+          isOpen={isEditModalOpen}
+          onClose={() => setIsEditModalOpen(false)}
+          onSave={handleSavePlan}
+          plan={selectedPlan}
+        />,
+        document.body
+      )}
 
       {/* Success Confirmation Modal */}
-      <SuccessModal
-        isOpen={isSuccessModalOpen}
-        onClose={() => setIsSuccessModalOpen(false)}
-        title="Success Confirmation"
-        message="Plan details have been updated successfully."
-      />
+      {isSuccessModalOpen && createPortal(
+        <SuccessModal
+          isOpen={isSuccessModalOpen}
+          onClose={() => setIsSuccessModalOpen(false)}
+          title="Success Confirmation"
+          message="Plan details have been updated successfully."
+        />,
+        document.body
+      )}
     </div>
   );
 };

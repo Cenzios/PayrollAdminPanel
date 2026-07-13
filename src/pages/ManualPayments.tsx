@@ -3,7 +3,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
-import { Search, Eye, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Search, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+import { useToast } from '../components/ToastContext';
 
 interface User {
     id: string;
@@ -23,22 +24,34 @@ interface UserDocument {
 
 type TabType = 'PENDING' | 'APPROVED';
 
+const SESSION_KEY = 'manualPayments_activeTab';
+
 export default function ManualPayments() {
     const { token } = useAppSelector((state) => state.auth);
     const dispatch = useAppDispatch();
     const queryClient = useQueryClient();
+    const { showToast } = useToast();
+    const [activeTab, setActiveTab] = useState<TabType>(() => {
+        const saved = sessionStorage.getItem(SESSION_KEY);
+        return (saved === 'PENDING' || saved === 'APPROVED') ? saved : 'PENDING';
+    });
+    const [searchTerm, setSearchTerm] = useState('');
+    const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
+    const [selectedFileName, setSelectedFileName] = useState<string>('');
+    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+    const [rowsPerPage, setRowsPerPage] = useState(10);
+    const [currentPage, setCurrentPage] = useState(1);
 
     useEffect(() => {
         dispatch(setPageTitle({ title: 'Payroll Review', subtitle: 'Manual Payment Verification' }));
     }, [dispatch]);
-    const [activeTab, setActiveTab] = useState<TabType>('PENDING');
-    const [searchTerm, setSearchTerm] = useState('');
-    const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
-    const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
 
-    const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://payrolladminbackend.cenzios.com/api';
+    useEffect(() => {
+        sessionStorage.setItem(SESSION_KEY, activeTab);
+    }, [activeTab]);
 
-    // Fetch payments based on active tab
+    const API_BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL;
+
     const { data: documents = [], isLoading } = useQuery<UserDocument[]>({
         queryKey: ['manual-payments', activeTab],
         queryFn: async () => {
@@ -50,7 +63,6 @@ export default function ManualPayments() {
         enabled: !!token,
     });
 
-    // Approve Mutation
     const approveMutation = useMutation({
         mutationFn: async (id: string) => {
             await axios.post(`${API_BASE_URL}/admin/manual-payments/${id}/approve`, {}, {
@@ -58,13 +70,19 @@ export default function ManualPayments() {
             });
         },
         onSuccess: () => {
+            showToast('Payment approved successfully!', 'success');
             queryClient.invalidateQueries({ queryKey: ['manual-payments', 'PENDING'] });
             queryClient.invalidateQueries({ queryKey: ['manual-payments', 'APPROVED'] });
             setActiveMenuId(null);
+        },
+        onError: (error: any) => {
+            showToast(
+                error.response?.data?.message || 'Failed to approve payment',
+                'error'
+            );
         }
     });
 
-    // Reject Mutation
     const rejectMutation = useMutation({
         mutationFn: async (id: string) => {
             await axios.post(`${API_BASE_URL}/admin/manual-payments/${id}/reject`, {}, {
@@ -72,10 +90,35 @@ export default function ManualPayments() {
             });
         },
         onSuccess: () => {
+            showToast('⚠️ Payment rejected successfully!', 'success');
             queryClient.invalidateQueries({ queryKey: ['manual-payments', 'PENDING'] });
             setActiveMenuId(null);
+        },
+        onError: (error: any) => {
+            showToast(
+                error.response?.data?.message || 'Failed to reject payment',
+                'error'
+            );
         }
     });
+
+    const handleDownload = async (url: string, fileName: string) => {
+        try {
+            const response = await fetch(url);
+            const blob = await response.blob();
+            const blobUrl = window.URL.createObjectURL(blob);
+            const link = document.createElement('a');
+            link.href = blobUrl;
+            link.download = fileName || 'download';
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+            window.URL.revokeObjectURL(blobUrl);
+        } catch (error) {
+            console.error('Download failed:', error);
+            window.open(url, '_blank', 'noopener,noreferrer');
+        }
+    };
 
     const filteredDocuments = documents.filter(doc =>
         doc.user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -83,26 +126,34 @@ export default function ManualPayments() {
         doc.fileName?.toLowerCase().includes(searchTerm.toLowerCase())
     );
 
+    const totalRecords = filteredDocuments.length;
+    const paginatedDocuments = filteredDocuments.slice(
+        (currentPage - 1) * rowsPerPage,
+        currentPage * rowsPerPage
+    );
+
     return (
-        <div className="space-y-2 p-2 bg-gray-50 min-h-[calc(100vh-80px)]">
-            {/* Tabs / Filter at the top */}
-            <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 w-fit">
+        <div className="flex flex-col h-full space-y-2 p-2 bg-gray-50">
+            {/* Tabs */}
+            <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 w-fit shrink-0">
                 <button
-                    onClick={() => setActiveTab('PENDING')}
+                    onClick={() => { setActiveTab('PENDING'); setCurrentPage(1); }}
                     className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'PENDING' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
                 >
                     Pending Reviews
                 </button>
                 <button
-                    onClick={() => setActiveTab('APPROVED')}
+                    onClick={() => { setActiveTab('APPROVED'); setCurrentPage(1); }}
                     className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'APPROVED' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
                 >
                     Approved History
                 </button>
             </div>
 
-            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-                <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50">
+            {/* Table Container */}
+            <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col flex-1 min-h-0">
+                {/* Header */}
+                <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 shrink-0">
                     <div className="flex items-center space-x-2">
                         <h2 className="text-lg font-semibold text-gray-800">
                             {activeTab === 'PENDING' ? 'Pending Payments' : 'Payment History'}
@@ -111,7 +162,6 @@ export default function ManualPayments() {
                             {filteredDocuments.length} records
                         </span>
                     </div>
-
                     <div className="relative w-full md:w-80">
                         <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
                         <input
@@ -124,14 +174,15 @@ export default function ManualPayments() {
                     </div>
                 </div>
 
-                <div className="overflow-x-auto">
+                {/* Table */}
+                <div className="overflow-x-auto flex-1 min-h-0 overscroll-contain [scrollbar-gutter:stable]">
                     <table className="w-full text-left">
                         <thead>
-                            <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
-                                <th className="px-6 py-4 text-center">Avatar</th>
+                            <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider sticky top-0 z-10">
+                                <th className="px-6 py-4 text-center"></th>
                                 <th className="px-6 py-4">User Details</th>
                                 <th className="px-6 py-4">Date & Time</th>
-                                <th className="px-6 py-4">File Name</th>
+                                <th className="px-6 py-4">Uploaded Document</th>
                                 <th className="px-6 py-4 text-center">Preview</th>
                                 <th className="px-6 py-4 text-center">Status</th>
                                 <th className="px-6 py-4 text-center">Actions</th>
@@ -146,7 +197,7 @@ export default function ManualPayments() {
                                 <tr>
                                     <td colSpan={7} className="px-6 py-10 text-center text-gray-400 italic">No records found.</td>
                                 </tr>
-                            ) : filteredDocuments.map((doc) => {
+                            ) : paginatedDocuments.map((doc) => {
                                 const initials = doc.user.fullName
                                     ? doc.user.fullName.split(' ').map((n) => n[0]).join('').substring(0, 2).toUpperCase()
                                     : 'U';
@@ -180,7 +231,10 @@ export default function ManualPayments() {
                                         </td>
                                         <td className="px-6 py-4 text-center">
                                             <button
-                                                onClick={() => setSelectedImageUrl(doc.fileUrl)}
+                                                onClick={() => {
+                                                    setSelectedImageUrl(doc.fileUrl);
+                                                    setSelectedFileName(doc.fileName);
+                                                }}
                                                 className="inline-flex items-center justify-center p-2 text-blue-600 transition-colors group/btn"
                                             >
                                                 <p className="inline-flex items-center px-3 py-1 rounded-full text-xs font-semibold uppercase bg-blue-50 text-blue-600 border border-blue-200 hover:text-blue-800 hover:bg-blue-100 transition-colors">View</p>
@@ -202,7 +256,7 @@ export default function ManualPayments() {
                                                 </button>
 
                                                 {activeMenuId === doc.id && (
-                                                    <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10">
+                                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-[999] origin-top-right">
                                                         {activeTab === 'PENDING' ? (
                                                             <>
                                                                 <button
@@ -212,7 +266,7 @@ export default function ManualPayments() {
                                                                     }}
                                                                     className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
                                                                 >
-                                                                    <Check size={16} /> Approve Payment
+                                                                    <Check size={16} /> Approve Bank Slip
                                                                 </button>
                                                                 <button
                                                                     onClick={() => {
@@ -221,7 +275,7 @@ export default function ManualPayments() {
                                                                     }}
                                                                     className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                                                                 >
-                                                                    <X size={16} /> Reject Payment
+                                                                    <X size={16} /> Reject Bank Slip
                                                                 </button>
                                                             </>
                                                         ) : (
@@ -237,6 +291,54 @@ export default function ManualPayments() {
                         </tbody>
                     </table>
                 </div>
+
+                {/* Pagination */}
+                <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
+                    <div className="flex items-center space-x-4">
+                        <span className="text-sm text-gray-500">Rows per page</span>
+                        <select
+                            value={rowsPerPage}
+                            onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
+                            className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1"
+                        >
+                            <option value={10}>10</option>
+                            <option value={20}>20</option>
+                            <option value={50}>50</option>
+                        </select>
+                        <span className="text-sm text-gray-500">
+                            {((currentPage - 1) * rowsPerPage) + 1}–{Math.min(currentPage * rowsPerPage, totalRecords)} of {totalRecords}
+                        </span>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                        <button
+                            disabled={currentPage === 1}
+                            onClick={() => setCurrentPage(prev => prev - 1)}
+                            className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                            <ChevronLeft size={18} />
+                        </button>
+                        <div className="flex items-center space-x-1">
+                            {Array.from({ length: Math.ceil(totalRecords / rowsPerPage) }, (_, i) => i + 1)
+                                .slice(Math.max(0, currentPage - 3), Math.min(Math.ceil(totalRecords / rowsPerPage), currentPage + 2))
+                                .map((page) => (
+                                    <button
+                                        key={page}
+                                        onClick={() => setCurrentPage(page)}
+                                        className={`px-3 py-1 rounded-lg text-sm transition-colors ${page === currentPage ? 'bg-blue-50 text-blue-600 font-semibold' : 'text-gray-500 hover:bg-gray-50'}`}
+                                    >
+                                        {page}
+                                    </button>
+                                ))}
+                        </div>
+                        <button
+                            disabled={currentPage >= Math.ceil(totalRecords / rowsPerPage)}
+                            onClick={() => setCurrentPage(prev => prev + 1)}
+                            className="p-2 border border-gray-200 rounded-lg text-gray-400 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                        >
+                            <ChevronRight size={18} />
+                        </button>
+                    </div>
+                </div>
             </div>
 
             {/* Image Preview Modal */}
@@ -246,29 +348,38 @@ export default function ManualPayments() {
                         <div className="flex items-center justify-between p-4 border-b border-gray-100">
                             <h3 className="text-lg font-semibold text-gray-800">Payment Proof Preview</h3>
                             <button
-                                onClick={() => setSelectedImageUrl(null)}
+                                onClick={() => {
+                                    setSelectedImageUrl(null);
+                                    setSelectedFileName('');
+                                }}
                                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                             >
                                 <X size={20} />
                             </button>
                         </div>
                         <div className="flex-1 overflow-auto p-4 bg-gray-50 flex items-center justify-center">
-                            <img
-                                src={selectedImageUrl}
-                                alt="Payment proof"
-                                className="max-w-full h-auto rounded-lg shadow-sm"
-                            />
+                            {selectedFileName.toLowerCase().endsWith('.pdf') ? (
+                                <iframe
+                                    src={`https://docs.google.com/viewer?url=${encodeURIComponent(selectedImageUrl!)}&embedded=true`}
+                                    className="w-full rounded-lg shadow-sm"
+                                    style={{ height: '70vh' }}
+                                    title="PDF Preview"
+                                />
+                            ) : (
+                                <img
+                                    src={selectedImageUrl}
+                                    alt="Payment proof"
+                                    className="max-w-full h-auto rounded-lg shadow-sm"
+                                />
+                            )}
                         </div>
                         <div className="p-4 border-t border-gray-100 flex justify-end">
-                            <a
-                                href={selectedImageUrl}
-                                target="_blank"
-                                rel="noreferrer"
-                                download
+                            <button
+                                onClick={() => handleDownload(selectedImageUrl!, selectedFileName)}
                                 className="px-5 py-2 bg-blue-600 text-white font-medium rounded-lg hover:bg-blue-700 transition-colors shadow-sm text-sm"
                             >
                                 Download Original
-                            </a>
+                            </button>
                         </div>
                     </div>
                 </div>

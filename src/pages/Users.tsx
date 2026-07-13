@@ -7,6 +7,8 @@ import api from '../utils/axios';
 import NotificationModal from '../components/NotificationModal';
 import UserDetailsModal from '../components/UserDetailsModal';
 import UserDetailsModalSkeleton from '../components/UserDetailsModalSkeleton';
+import ConfirmModal from '../components/ConfirmModal';
+import { useToast } from '../components/ToastContext';
 
 interface User {
   id: string;
@@ -15,11 +17,13 @@ interface User {
   companyCount: number;
   employeeCount: number;
   currentPlan: string;
+  userStatus: string;
   subscriptionStatus: string;
   paymentMethod: string;
 }
 
 const Users = () => {
+  const { showToast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
@@ -39,6 +43,16 @@ const Users = () => {
   // User Details Modal State
   const [isDetailsModalOpen, setIsDetailsModalOpen] = useState(false);
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
+
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    userId: string | null;
+    action: 'suspend' | 'activate' | null;
+  }>({
+    isOpen: false,
+    userId: null,
+    action: null,
+  });
 
   // Fetch users with data from API
   const { data: usersData, isLoading: isUsersLoading } = useQuery({
@@ -81,6 +95,8 @@ const Users = () => {
         return 'bg-red-50 text-red-600 border-red-100';
       case 'CANCELLED':
         return 'bg-gray-50 text-gray-600 border-gray-100';
+      case 'SUSPENDED':
+        return 'bg-red-50 text-red-600 border-red-100';
       default:
         return 'bg-gray-50 text-gray-600 border-gray-100';
     }
@@ -103,10 +119,10 @@ const Users = () => {
       return response.data;
     },
     onSuccess: () => {
-      alert('Notification sent successfully!');
+      showToast('Notification sent successfully!', 'success');
     },
     onError: (error: any) => {
-      alert(error.response?.data?.error || 'Failed to send notification');
+      showToast(error.response?.data?.error || 'Failed to send notification', 'error');
     }
   });
 
@@ -122,22 +138,36 @@ const Users = () => {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       setActiveMenuId(null);
+      showToast(
+        confirmState.action === 'suspend'
+          ? 'User suspended successfully'
+          : 'User activated successfully',
+        'success'
+      );
+      setConfirmState({ isOpen: false, userId: null, action: null });
     },
     onError: (error: any) => {
-      alert(error.response?.data?.error || 'Failed to update user status');
+      showToast(error.response?.data?.error || 'Failed to update user status', 'error');
+      setConfirmState({ isOpen: false, userId: null, action: null });
     }
   });
 
+
   const handleSuspendUser = (userId: string) => {
-    if (window.confirm('Are you sure you want to suspend this user?')) {
-      statusMutation.mutate({ userId, status: 'CANCELLED' });
-    }
+    setConfirmState({ isOpen: true, userId, action: 'suspend' });
   };
 
   const handleActivateUser = (userId: string) => {
-    if (window.confirm('Are you sure you want to activate this user?')) {
-      statusMutation.mutate({ userId, status: 'ACTIVE' });
-    }
+    setConfirmState({ isOpen: true, userId, action: 'activate' });
+  };
+
+  const handleConfirmStatusChange = () => {
+    if (!confirmState.userId || !confirmState.action) return;
+
+    statusMutation.mutate({
+      userId: confirmState.userId,
+      status: confirmState.action === 'suspend' ? 'SUSPENDED' : 'ACTIVE'
+    });
   };
 
   const handleCloseDetails = () => {
@@ -146,10 +176,9 @@ const Users = () => {
   };
 
   return (
-    <div className="space-y-6">
-
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50">
+    <div className="h-full flex flex-col">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+        <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 shrink-0">
           <div className="flex items-center space-x-2">
             <h2 className="text-lg font-semibold text-gray-800">Registered Users</h2>
             <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-0.5 rounded-full">
@@ -164,22 +193,32 @@ const Users = () => {
               placeholder="Search by user name"
               value={searchTerm}
               onChange={(e) => setSearchTerm(e.target.value)}
-              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all"
+              className="w-full pl-10 pr-4 py-2 bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all"
             />
           </div>
         </div>
 
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 [scrollbar-gutter:stable]">
           <table className="w-full text-left">
+            <colgroup>
+              <col className="w-[24%]" />{/* User Name */}
+              <col className="w-[11%]" />{/* No. of companies */}
+              <col className="w-[11%]" />{/* No. of employees */}
+              <col className="w-[13%]" />{/* Subscription Plan */}
+              <col className="w-[12%]" />{/* Payment Method */}
+              <col className="w-[8%]" />{/* Message */}
+              <col className="w-[13%]" />{/* Status */}
+              <col className="w-[8%]" />{/* Actions */}
+            </colgroup>
             <thead>
-              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider sticky top-0 z-10">
                 <th className="px-6 py-4">User Name</th>
-                <th className="px-6 py-4 text-center">No. of companies</th>
-                <th className="px-6 py-4 text-center">No. of employees</th>
-                <th className="px-6 py-4">Subscription Plan</th>
-                <th className="px-6 py-4">Payment Method</th>
-                <th className="px-6 py-4 text-center">Message</th>
-                <th className="px-6 py-4">Status</th>
+                <th className="px-3 py-4 text-center">No. of companies</th>
+                <th className="px-3 py-4 text-center">No. of employees</th>
+                <th className="px-3 py-4">Subscription Plan</th>
+                <th className="px-3 py-4">Payment Method</th>
+                <th className="px-3 py-4 text-center">Message</th>
+                <th className="px-3 py-4">Status</th>
                 <th className="px-6 py-4 text-center">Actions</th>
               </tr>
             </thead>
@@ -188,7 +227,7 @@ const Users = () => {
                 <tr>
                   <td colSpan={8} className="px-6 py-10 text-center text-gray-500">Loading users...</td>
                 </tr>
-              ) : filteredUsers.map((user) => (
+              ) : filteredUsers.map((user, index) => (
                 <tr
                   key={user.id}
                   className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
@@ -205,22 +244,22 @@ const Users = () => {
                       </div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-4 text-center">
                     <span className="text-sm text-gray-600 font-medium">
                       {(user.companyCount ?? 0).toString().padStart(2, '0')}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-4 text-center">
                     <span className="text-sm text-gray-600 font-medium">
                       {user.employeeCount ?? 0}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-4">
                     <span className="text-sm text-gray-600 font-medium">
                       {user.currentPlan}
                     </span>
                   </td>
-                  <td className="px-6 py-4">
+                  <td className="px-3 py-4">
                     <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${user.paymentMethod === 'Manual'
                       ? 'bg-amber-50 text-amber-600 border-amber-100'
                       : 'bg-indigo-50 text-indigo-600 border-indigo-100'
@@ -228,18 +267,23 @@ const Users = () => {
                       {user.paymentMethod}
                     </span>
                   </td>
-                  <td className="px-6 py-4 text-center">
+                  <td className="px-3 py-4 text-center">
                     <button
                       onClick={(e) => handleOpenModal(user.id, user.fullName || '', e)}
-                      className="text-gray-400 hover:text-blue-600 transition-colors p-2 rounded-lg hover:bg-blue-50"
+                      className="text-gray-400 hover:text-blue-600 transition-colors rounded-lg hover:bg-blue-50"
                     >
                       <MessageSquare size={18} />
                     </button>
                   </td>
-                  <td className="px-6 py-4">
-                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${getStatusStyles(user.subscriptionStatus || '')}`}>
-                      {user.subscriptionStatus}
-                    </span>
+                  <td className="px-3 py-4">
+                    <div className="flex flex-col gap-1">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold border w-fit uppercase ${getStatusStyles(user.userStatus || '')}`}>
+                        Account: {user.userStatus}
+                      </span>
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-medium border w-fit ${getStatusStyles(user.subscriptionStatus || '')}`}>
+                        Sub: {user.subscriptionStatus}
+                      </span>
+                    </div>
                   </td>
                   <td className="px-6 py-4 text-center">
                     <div className="relative">
@@ -254,7 +298,8 @@ const Users = () => {
                       </button>
 
                       {activeMenuId === user.id && (
-                        <div className="absolute right-0 mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10">
+                        <div className={`absolute right-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10 ${filteredUsers.length - index <= 3 ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'
+                          }`}>
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
@@ -283,7 +328,7 @@ const Users = () => {
           </table>
         </div>
 
-        <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-500">Rows per page</span>
             <select
@@ -358,6 +403,21 @@ const Users = () => {
       <UserDetailsModalSkeleton
         isOpen={isDetailsModalOpen && isUserDetailsLoading}
         onClose={handleCloseDetails}
+      />
+
+      <ConfirmModal
+        isOpen={confirmState.isOpen}
+        title={confirmState.action === 'suspend' ? 'Suspend user' : 'Activate user'}
+        message={
+          confirmState.action === 'suspend'
+            ? 'This will suspend the selected user and prevent them from accessing the system until reactivated.'
+            : 'This will restore access for the selected user.'
+        }
+        confirmLabel={confirmState.action === 'suspend' ? 'Suspend' : 'Activate'}
+        cancelLabel="Cancel"
+        confirmTone={confirmState.action === 'suspend' ? 'danger' : 'primary'}
+        onConfirm={handleConfirmStatusChange}
+        onCancel={() => setConfirmState({ isOpen: false, userId: null, action: null })}
       />
 
       {/* Click outside to close menu backdrop */}

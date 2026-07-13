@@ -35,7 +35,7 @@ export const getHardcodedFeatures = (planName: string): SubscriptionFeature[] =>
   ];
 
   if (planName.toUpperCase().includes('BASIC')) {
-    return [{ text: 'Payroll processing for 0 - 29 employees', included: true }, ...commonFeatures];
+    return [{ text: 'Payroll processing for unlimited employees', included: true }, ...commonFeatures];
   } else if (planName.toUpperCase().includes('PROFESSIONAL')) {
     return [{ text: 'Payroll processing for 30 - 99 employees', included: true }, ...commonFeatures];
   } else {

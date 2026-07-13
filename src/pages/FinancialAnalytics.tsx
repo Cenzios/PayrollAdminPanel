@@ -3,7 +3,7 @@ import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
 import { useQuery } from '@tanstack/react-query';
 import api from '../utils/axios';
-import { DollarSign, CreditCard, Receipt, AlertCircle, Search, Calendar, ArrowRight, Download, Mail } from 'lucide-react';
+import { DollarSign, CreditCard, Receipt, AlertCircle, Search, Calendar, ArrowRight, Download, Mail, Target } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
 
 const FinancialAnalytics = () => {
@@ -70,27 +70,27 @@ const FinancialAnalytics = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatsCard
                     title="TOTAL REVENUE"
-                    value={`LKR ${statsData?.totalRevenue?.toLocaleString() || 0}`}
+                    value={`Rs ${statsData?.totalRevenue?.toLocaleString() || 0}`}
                     icon={DollarSign}
                     iconBgColor="bg-blue-50"
                     iconColor="text-blue-600"
-                    trend={{ value: 12, isUp: true, label: 'vs last month' }}
+                // trend={{ value: 12, isUp: true, label: 'vs last month' }}
                 />
                 <StatsCard
                     title="ONLINE REVENUE"
-                    value={`LKR ${statsData?.onlineRevenue?.toLocaleString() || 0}`}
+                    value={`Rs ${statsData?.onlineRevenue?.toLocaleString() || 0}`}
                     icon={CreditCard}
                     iconBgColor="bg-indigo-50"
                     iconColor="text-indigo-600"
-                    trend={{ value: onlinePercent.toFixed(1) + '%', isUp: true, label: 'of total' }}
+                // trend={{ value: onlinePercent.toFixed(1) + '%', isUp: true, label: 'of total' }}
                 />
                 <StatsCard
                     title="MANUAL REVENUE"
-                    value={`LKR ${statsData?.manualRevenue?.toLocaleString() || 0}`}
+                    value={`Rs ${statsData?.manualRevenue?.toLocaleString() || 0}`}
                     icon={Receipt}
                     iconBgColor="bg-amber-50"
                     iconColor="text-amber-600"
-                    trend={{ value: manualPercent.toFixed(1) + '%', isUp: false, label: 'of total' }}
+                // trend={{ value: manualPercent.toFixed(1) + '%', isUp: false, label: 'of total' }}
                 />
                 <StatsCard
                     title="OVERDUE INVOICES"
@@ -111,7 +111,7 @@ const FinancialAnalytics = () => {
                         </div>
                         <span className="bg-red-50 text-red-600 text-[10px] font-black px-2.5 py-1 rounded-lg uppercase tracking-wider border border-red-100">Urgent</span>
                     </div>
-                    <div className="flex-1 overflow-y-auto max-h-[500px]">
+                    <div className="flex-1 overflow-y-auto max-h-[400px] overscroll-contain">
                         {isOverdueLoading ? (
                             <div className="p-10 text-center text-gray-400">Loading...</div>
                         ) : overdueData?.length > 0 ? (
@@ -164,7 +164,7 @@ const FinancialAnalytics = () => {
                         </div>
                     </div>
 
-                    <div className="flex-1 overflow-y-auto max-h-[500px]">
+                    <div className="flex-1 overflow-y-auto max-h-[400px] overscroll-contain">
                         {isSearching ? (
                             <div className="p-10 text-center">
                                 <div className="w-6 h-6 border-2 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
@@ -201,9 +201,9 @@ const FinancialAnalytics = () => {
                                                 <p className="text-sm font-black text-gray-900">LKR {inv.totalAmount.toLocaleString()}</p>
                                                 <p className="text-[10px] text-gray-400 font-medium uppercase mt-0.5">{new Date(inv.createdAt).toLocaleDateString()}</p>
                                             </div>
-                                            <button className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
+                                            {/* <button className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
                                                 <Download size={14} />
-                                            </button>
+                                            </button> */}
                                         </div>
                                     </div>
                                 ))}
@@ -223,58 +223,61 @@ const FinancialAnalytics = () => {
 
             {/* Revenue Channel Analysis */}
             <div className="bg-white rounded-[2rem] border border-gray-100 shadow-sm p-8 overflow-hidden relative">
-                <div className="relative z-10">
-                    <h3 className="text-xl font-bold text-gray-800 mb-2">Revenue Channel Breakdown</h3>
-                    <p className="text-sm text-gray-500 mb-8">Performance comparison between Online and Manual payment methods</p>
+                <div className="relative z-10 grid grid-cols-[2fr_1fr] gap-20">
+                    <div className="w-full">
+                        <h3 className="text-xl font-bold text-gray-800 mb-2">Revenue Channel Breakdown</h3>
+                        <p className="text-sm text-gray-500 mb-8">Performance comparison between Online and Manual payment methods</p>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12">
-                        <div className="space-y-6">
-                            <div className="space-y-2">
-                                <div className="flex justify-between items-end">
-                                    <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider">Online Payments</p>
-                                    <p className="text-lg font-black text-gray-900">{onlinePercent.toFixed(1)}%</p>
+                        <div className="grid grid-cols-1 md:grid-cols-1 w-full">
+                            <div className="space-y-6">
+                                <div className="space-y-2">
+                                    <div className="flex justify-between items-end">
+                                        <p className="text-sm font-bold text-indigo-600 uppercase tracking-wider">Online Payments</p>
+                                        <p className="text-lg font-black text-gray-900">{onlinePercent.toFixed(1)}%</p>
+                                    </div>
+                                    <div className="h-3 w-full bg-gray-50 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-indigo-500 to-indigo-700 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(79,70,229,0.3)]"
+                                            style={{ width: `${onlinePercent}%` }}
+                                        ></div>
+                                    </div>
+                                    <p className="text-xs text-gray-400">Via Stripe Credit/Debit Cards</p>
                                 </div>
-                                <div className="h-3 w-full bg-gray-50 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-gradient-to-r from-indigo-500 to-indigo-700 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(79,70,229,0.3)]"
-                                        style={{ width: `${onlinePercent}%` }}
-                                    ></div>
-                                </div>
-                                <p className="text-xs text-gray-400">Via Stripe Credit/Debit Cards</p>
-                            </div>
 
-                            <div className="space-y-2 pt-2">
-                                <div className="flex justify-between items-end">
-                                    <p className="text-sm font-bold text-amber-600 uppercase tracking-wider">Manual Payments</p>
-                                    <p className="text-lg font-black text-gray-900">{manualPercent.toFixed(1)}%</p>
+                                <div className="space-y-2 pt-2">
+                                    <div className="flex justify-between items-end">
+                                        <p className="text-sm font-bold text-amber-600 uppercase tracking-wider">Manual Payments</p>
+                                        <p className="text-lg font-black text-gray-900">{manualPercent.toFixed(1)}%</p>
+                                    </div>
+                                    <div className="h-3 w-full bg-gray-50 rounded-full overflow-hidden">
+                                        <div
+                                            className="h-full bg-gradient-to-r from-amber-500 to-amber-700 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(245,158,11,0.3)]"
+                                            style={{ width: `${manualPercent}%` }}
+                                        ></div>
+                                    </div>
+                                    <p className="text-xs text-gray-400">Via Direct Bank Slips & Uploads</p>
                                 </div>
-                                <div className="h-3 w-full bg-gray-50 rounded-full overflow-hidden">
-                                    <div
-                                        className="h-full bg-gradient-to-r from-amber-500 to-amber-700 rounded-full transition-all duration-1000 ease-out shadow-[0_0_10px_rgba(245,158,11,0.3)]"
-                                        style={{ width: `${manualPercent}%` }}
-                                    ></div>
-                                </div>
-                                <p className="text-xs text-gray-400">Via Direct Bank Slips & Uploads</p>
                             </div>
                         </div>
+                    </div>
 
-                        <div className="bg-gray-50/50 rounded-3xl p-6 flex flex-col justify-center items-center text-center border border-gray-100">
-                            <div className="w-16 h-16 bg-white rounded-2xl shadow-sm flex items-center justify-center text-blue-600 mb-4 border border-gray-50">
-                                <ArrowRight size={28} />
-                            </div>
-                            <h4 className="text-lg font-bold text-gray-900 mb-2">Targeted Growth</h4>
-                            <p className="text-sm text-gray-500 leading-relaxed max-w-[300px]">
-                                Automating manual payment verification can reduce admin workload by up to 80%. Consider promoting online payments for smoother cashflow.
-                            </p>
+                    <div className="bg-gray-50/50 rounded-3xl flex flex-col justify-center items-center text-center border border-gray-100">
+                        <div className="w-16 h-16 rounded-2xl flex items-center justify-center text-blue-600">
+                            <Target size={40} />
                         </div>
+                        <h4 className="text-lg font-bold text-gray-900 mb-2">Targeted Growth</h4>
+                        <p className="text-sm text-gray-500 leading-relaxed max-w-[300px]">
+                            Automating manual payment verification can reduce admin workload by up to 80%. Consider promoting online payments for smoother cashflow.
+                        </p>
                     </div>
                 </div>
 
                 {/* Background Decorative Element */}
                 <div className="absolute top-0 right-0 w-64 h-64 bg-blue-50/30 rounded-full -translate-y-1/2 translate-x-1/2 blur-3xl z-0"></div>
             </div>
-        </div>
+        </div >
     );
 };
 
 export default FinancialAnalytics;
+
