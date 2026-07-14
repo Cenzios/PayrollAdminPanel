@@ -3,8 +3,16 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
+<<<<<<< Updated upstream
 import { Search, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
+=======
+import { Search, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
+import { Document, Page, pdfjs } from 'react-pdf';
+import 'react-pdf/dist/Page/AnnotationLayer.css';
+import 'react-pdf/dist/Page/TextLayer.css';
+>>>>>>> Stashed changes
 import { useToast } from '../components/ToastContext';
+import { createPortal } from 'react-dom';
 
 interface User {
     id: string;
@@ -39,6 +47,14 @@ export default function ManualPayments() {
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [selectedFileName, setSelectedFileName] = useState<string>('');
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
+<<<<<<< Updated upstream
+=======
+    const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
+    const [numPages, setNumPages] = useState<number>(0);
+    const [pageNumber, setPageNumber] = useState<number>(1);
+    const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
+    const [pdfLoading, setPdfLoading] = useState(false);
+>>>>>>> Stashed changes
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -74,12 +90,15 @@ export default function ManualPayments() {
             queryClient.invalidateQueries({ queryKey: ['manual-payments', 'PENDING'] });
             queryClient.invalidateQueries({ queryKey: ['manual-payments', 'APPROVED'] });
             setActiveMenuId(null);
+            setMenuPosition(null);
         },
         onError: (error: any) => {
             showToast(
                 error.response?.data?.message || 'Failed to approve payment',
                 'error'
             );
+            setActiveMenuId(null);
+            setMenuPosition(null);
         }
     });
 
@@ -93,12 +112,15 @@ export default function ManualPayments() {
             showToast('⚠️ Payment rejected successfully!', 'success');
             queryClient.invalidateQueries({ queryKey: ['manual-payments', 'PENDING'] });
             setActiveMenuId(null);
+            setMenuPosition(null);
         },
         onError: (error: any) => {
             showToast(
                 error.response?.data?.message || 'Failed to reject payment',
                 'error'
             );
+            setActiveMenuId(null);
+            setMenuPosition(null);
         }
     });
 
@@ -247,41 +269,91 @@ export default function ManualPayments() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
+                                            {/* ACTIONS COLUMN with loading feedback */}
                                             <div className="relative">
                                                 <button
-                                                    onClick={() => setActiveMenuId(activeMenuId === doc.id ? null : doc.id)}
+                                                    onClick={(e) => {
+                                                        e.stopPropagation();
+                                                        const rect = e.currentTarget.getBoundingClientRect();
+                                                        setMenuPosition({
+                                                            top: rect.bottom + 8,
+                                                            right: window.innerWidth - rect.right,
+                                                        });
+                                                        setActiveMenuId(activeMenuId === doc.id ? null : doc.id);
+                                                    }}
                                                     className="text-gray-400 hover:text-gray-600 p-1 rounded-full hover:bg-gray-100 transition-colors"
                                                 >
                                                     <MoreVertical size={18} />
                                                 </button>
 
+<<<<<<< Updated upstream
                                                 {activeMenuId === doc.id && (
                                                     <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-[999] origin-top-right">
+=======
+                                                {activeMenuId === doc.id && menuPosition && createPortal(
+                                                    <div
+                                                        className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-[999]"
+                                                        style={{
+                                                            top: menuPosition.top,
+                                                            right: menuPosition.right,
+                                                        }}
+                                                        onClick={(e) => e.stopPropagation()}
+                                                    >
+>>>>>>> Stashed changes
                                                         {activeTab === 'PENDING' ? (
                                                             <>
                                                                 <button
                                                                     onClick={() => {
                                                                         approveMutation.mutate(doc.id);
-                                                                        setActiveMenuId(null);
+                                                                        // DO NOT close menu immediately – let the mutation callbacks handle it
                                                                     }}
-                                                                    className="w-full text-left px-4 py-2 text-sm text-green-600 hover:bg-green-50 flex items-center gap-2"
+                                                                    disabled={approveMutation.isPending}
+                                                                    className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 
+                                                                        ${approveMutation.isPending 
+                                                                            ? 'text-gray-400 cursor-not-allowed' 
+                                                                            : 'text-green-600 hover:bg-green-50'
+                                                                        }`}
                                                                 >
-                                                                    <Check size={16} /> Approve Bank Slip
+                                                                    {approveMutation.isPending ? (
+                                                                        <>
+                                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                                            Approving…
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <Check size={16} /> Approve Bank Slip
+                                                                        </>
+                                                                    )}
                                                                 </button>
                                                                 <button
                                                                     onClick={() => {
                                                                         rejectMutation.mutate(doc.id);
-                                                                        setActiveMenuId(null);
+                                                                        // DO NOT close menu immediately – let the mutation callbacks handle it
                                                                     }}
-                                                                    className="w-full text-left px-4 py-2 text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
+                                                                    disabled={rejectMutation.isPending}
+                                                                    className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 
+                                                                        ${rejectMutation.isPending 
+                                                                            ? 'text-gray-400 cursor-not-allowed' 
+                                                                            : 'text-red-600 hover:bg-red-50'
+                                                                        }`}
                                                                 >
-                                                                    <X size={16} /> Reject Bank Slip
+                                                                    {rejectMutation.isPending ? (
+                                                                        <>
+                                                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                                                            Rejecting…
+                                                                        </>
+                                                                    ) : (
+                                                                        <>
+                                                                            <X size={16} /> Reject Bank Slip
+                                                                        </>
+                                                                    )}
                                                                 </button>
                                                             </>
                                                         ) : (
                                                             <div className="px-4 py-2 text-xs text-gray-400 italic">No actions available</div>
                                                         )}
-                                                    </div>
+                                                    </div>,
+                                                    document.body
                                                 )}
                                             </div>
                                         </td>
@@ -389,7 +461,10 @@ export default function ManualPayments() {
             {activeMenuId && (
                 <div
                     className="fixed inset-0 z-0"
-                    onClick={() => setActiveMenuId(null)}
+                    onClick={() => {
+                        setActiveMenuId(null);
+                        setMenuPosition(null);
+                    }}
                 />
             )}
         </div>
