@@ -3,16 +3,14 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
-<<<<<<< Updated upstream
-import { Search, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight } from 'lucide-react';
-=======
 import { Search, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
 import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
->>>>>>> Stashed changes
 import { useToast } from '../components/ToastContext';
 import { createPortal } from 'react-dom';
+
+pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
 interface User {
     id: string;
@@ -47,14 +45,11 @@ export default function ManualPayments() {
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [selectedFileName, setSelectedFileName] = useState<string>('');
     const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
-<<<<<<< Updated upstream
-=======
     const [menuPosition, setMenuPosition] = useState<{ top: number; right: number } | null>(null);
     const [numPages, setNumPages] = useState<number>(0);
     const [pageNumber, setPageNumber] = useState<number>(1);
     const [pdfBlobUrl, setPdfBlobUrl] = useState<string | null>(null);
     const [pdfLoading, setPdfLoading] = useState(false);
->>>>>>> Stashed changes
     const [rowsPerPage, setRowsPerPage] = useState(10);
     const [currentPage, setCurrentPage] = useState(1);
 
@@ -124,6 +119,24 @@ export default function ManualPayments() {
         }
     });
 
+    const loadPdfAsBlob = async (url: string) => {
+        setPdfLoading(true);
+        setPdfBlobUrl(null);
+        try {
+            const response = await fetch(url, {
+                headers: { Authorization: `Bearer ${token}` }
+            });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            const blob = await response.blob();
+            const objectUrl = URL.createObjectURL(blob);
+            setPdfBlobUrl(objectUrl);
+        } catch (error) {
+            console.error('PDF fetch failed:', error);
+        } finally {
+            setPdfLoading(false);
+        }
+    };
+
     const handleDownload = async (url: string, fileName: string) => {
         try {
             const response = await fetch(url);
@@ -172,9 +185,7 @@ export default function ManualPayments() {
                 </button>
             </div>
 
-            {/* Table Container */}
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col flex-1 min-h-0">
-                {/* Header */}
                 <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 shrink-0">
                     <div className="flex items-center space-x-2">
                         <h2 className="text-lg font-semibold text-gray-800">
@@ -196,7 +207,6 @@ export default function ManualPayments() {
                     </div>
                 </div>
 
-                {/* Table */}
                 <div className="overflow-x-auto flex-1 min-h-0 overscroll-contain [scrollbar-gutter:stable]">
                     <table className="w-full text-left">
                         <thead>
@@ -256,6 +266,9 @@ export default function ManualPayments() {
                                                 onClick={() => {
                                                     setSelectedImageUrl(doc.fileUrl);
                                                     setSelectedFileName(doc.fileName);
+                                                    if (doc.fileName.toLowerCase().endsWith('.pdf')) {
+                                                        loadPdfAsBlob(doc.fileUrl);
+                                                    }
                                                 }}
                                                 className="inline-flex items-center justify-center p-2 text-blue-600 transition-colors group/btn"
                                             >
@@ -269,7 +282,6 @@ export default function ManualPayments() {
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            {/* ACTIONS COLUMN with loading feedback */}
                                             <div className="relative">
                                                 <button
                                                     onClick={(e) => {
@@ -286,10 +298,6 @@ export default function ManualPayments() {
                                                     <MoreVertical size={18} />
                                                 </button>
 
-<<<<<<< Updated upstream
-                                                {activeMenuId === doc.id && (
-                                                    <div className="absolute right-0 top-full mt-2 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-[999] origin-top-right">
-=======
                                                 {activeMenuId === doc.id && menuPosition && createPortal(
                                                     <div
                                                         className="fixed w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-[999]"
@@ -299,13 +307,11 @@ export default function ManualPayments() {
                                                         }}
                                                         onClick={(e) => e.stopPropagation()}
                                                     >
->>>>>>> Stashed changes
                                                         {activeTab === 'PENDING' ? (
                                                             <>
                                                                 <button
                                                                     onClick={() => {
                                                                         approveMutation.mutate(doc.id);
-                                                                        // DO NOT close menu immediately – let the mutation callbacks handle it
                                                                     }}
                                                                     disabled={approveMutation.isPending}
                                                                     className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 
@@ -328,7 +334,6 @@ export default function ManualPayments() {
                                                                 <button
                                                                     onClick={() => {
                                                                         rejectMutation.mutate(doc.id);
-                                                                        // DO NOT close menu immediately – let the mutation callbacks handle it
                                                                     }}
                                                                     disabled={rejectMutation.isPending}
                                                                     className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 
@@ -364,7 +369,6 @@ export default function ManualPayments() {
                     </table>
                 </div>
 
-                {/* Pagination */}
                 <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
                     <div className="flex items-center space-x-4">
                         <span className="text-sm text-gray-500">Rows per page</span>
@@ -423,6 +427,12 @@ export default function ManualPayments() {
                                 onClick={() => {
                                     setSelectedImageUrl(null);
                                     setSelectedFileName('');
+                                    setPageNumber(1);
+                                    setNumPages(0);
+                                    if (pdfBlobUrl) {
+                                        URL.revokeObjectURL(pdfBlobUrl);
+                                        setPdfBlobUrl(null);
+                                    }
                                 }}
                                 className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-full transition-colors"
                             >
