@@ -30,12 +30,12 @@ function App() {
     );
   }
 
-  // ✅ Show skeleton ONLY while loading and user is null
+  // Show skeleton ONLY while loading and user is null
   if (isLoading && !user) {
     return <DashboardSkeleton />;
   }
 
-  // ✅ If user exists, render app (even if isLoading is true)
+  // If user exists, render app (even if isLoading is true)
   // This prevents blank page when user data is already loaded
   return (
     <Layout>
