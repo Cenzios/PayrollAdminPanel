@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../utils/axios';
 import { DollarSign, CreditCard, Receipt, AlertCircle, Search, Calendar, ArrowRight, Download, Mail, Target } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
@@ -10,6 +10,7 @@ const FinancialAnalytics = () => {
     const dispatch = useAppDispatch();
     const [searchTerm, setSearchTerm] = useState('');
     const [debouncedSearch, setDebouncedSearch] = useState('');
+    const [remindStatus, setRemindStatus] = useState<Record<string, 'loading' | 'sent' | 'error'>>({})
 
     // Debounce search term
     useEffect(() => {
@@ -48,6 +49,37 @@ const FinancialAnalytics = () => {
             return response.data.data.invoices;
         },
         enabled: debouncedSearch.length > 2,
+    });
+
+    const remindMutation = useMutation({
+        mutationFn: async (invoiceId: string) => {
+            const response = await api.post(`/admin/revenue/remind/${invoiceId}`);
+            return response.data;
+        },
+        onMutate: (invoiceId: string) => {
+            setRemindStatus(prev => ({ ...prev, [invoiceId]: 'loading' }));
+        },
+        onSuccess: (_data, invoiceId) => {
+            setRemindStatus(prev => ({ ...prev, [invoiceId]: 'sent' }));
+            // Auto-clear after 4 seconds
+            setTimeout(() => {
+                setRemindStatus(prev => {
+                    const next = { ...prev };
+                    delete next[invoiceId];
+                    return next;
+                });
+            }, 4000);
+        },
+        onError: (_error, invoiceId) => {
+            setRemindStatus(prev => ({ ...prev, [invoiceId]: 'error' }));
+            setTimeout(() => {
+                setRemindStatus(prev => {
+                    const next = { ...prev };
+                    delete next[invoiceId];
+                    return next;
+                });
+            }, 4000);
+        },
     });
 
     if (isStatsLoading) {
@@ -128,8 +160,21 @@ const FinancialAnalytics = () => {
                                     </div>
                                     <div className="text-right">
                                         <p className="text-sm font-black text-red-600">LKR {invoice.totalAmount.toLocaleString()}</p>
-                                        <button className="text-[10px] text-blue-600 font-bold hover:underline mt-1 flex items-center gap-1 ml-auto">
-                                            <Mail size={12} /> Remind
+                                        <button
+                                            onClick={() => remindMutation.mutate(invoice.id)}
+                                            disabled={remindStatus[invoice.id] === 'loading' || remindStatus[invoice.id] === 'sent'}
+                                            className="text-[10px] font-bold hover:underline mt-1 flex items-center gap-1 ml-auto disabled:opacity-60 disabled:cursor-not-allowed transition-colors"
+                                            style={{ color: remindStatus[invoice.id] === 'sent' ? '#16a34a' : remindStatus[invoice.id] === 'error' ? '#dc2626' : '#2563eb' }}
+                                        >
+                                            {remindStatus[invoice.id] === 'loading' ? (
+                                                <><span className="w-3 h-3 border border-blue-400 border-t-transparent rounded-full animate-spin inline-block" /> Sending...</>
+                                            ) : remindStatus[invoice.id] === 'sent' ? (
+                                                <><Mail size={12} /> Sent!</>
+                                            ) : remindStatus[invoice.id] === 'error' ? (
+                                                <><Mail size={12} /> Failed</>  
+                                            ) : (
+                                                <><Mail size={12} /> Remind</>
+                                            )}
                                         </button>
                                     </div>
                                 </div>
