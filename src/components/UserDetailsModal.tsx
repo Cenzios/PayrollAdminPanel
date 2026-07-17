@@ -15,6 +15,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
     if (!isOpen || !userData) return null;
 
     const { user, currentSubscription, companies, stats } = userData;
+    const monthlyBill = (companies ?? []).reduce((sum: number, company: any) => sum + (company.employeeCount ?? 0) * 100, 0);
     const initials = user.fullName?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??';
 
     const formatDate = (dateString: string | null) => {
@@ -143,7 +144,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                         <div className="mb-4 md:mb-0">
                             <p className="text-blue-600 font-semibold mb-1">Monthly Bill:</p>
                             <div className="flex items-baseline space-x-2">
-                                <span className="text-3xl font-extrabold text-blue-700">RS: {stats.monthlyBill.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-3xl font-extrabold text-blue-700">RS: {monthlyBill.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                         <div className="text-right">
