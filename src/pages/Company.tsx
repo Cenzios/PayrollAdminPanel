@@ -29,10 +29,10 @@ const Company = () => {
   }, [dispatch]);
 
   const { data: companiesData, isLoading } = useQuery({
-    queryKey: ['companies', currentPage, rowsPerPage, searchTerm],
+    queryKey: ['companies', currentPage, rowsPerPage],
     queryFn: async () => {
       const response = await api.get('/admin/companies', {
-        params: { page: currentPage, limit: rowsPerPage, search: searchTerm }
+        params: { page: currentPage, limit: rowsPerPage }
       });
       return response.data;
     },
@@ -43,6 +43,10 @@ const Company = () => {
   const companies = (Array.isArray(rawData) ? rawData : rawData?.companies || []) as CompanyData[];
   const totalCompanies = companiesData?.pagination?.total || rawData?.pagination?.total || 0;
 
+  const filteredCompanies = companies.filter(company => 
+    company.name?.toLowerCase().includes(searchTerm.toLowerCase()) || false
+  );
+
   const formatDate = (dateString: string) => {
     return new Date(dateString).toLocaleDateString('en-US', {
       year: 'numeric',
@@ -52,10 +56,9 @@ const Company = () => {
   };
 
   return (
-    <div className="space-y-6">
-
-      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden">
-        <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50">
+    <div className="h-full flex flex-col">
+      <div className="bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden flex flex-col flex-1 min-h-0">
+        <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 shrink-0">
           <div className="flex items-center space-x-2">
             <h2 className="text-lg font-semibold text-gray-800">Registered Companies</h2>
             <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-0.5 rounded-full">
@@ -75,10 +78,19 @@ const Company = () => {
           </div>
         </div>
 
-        <div className="overflow-x-auto">
-          <table className="w-full text-left">
+        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-0 [scrollbar-gutter:stable]">
+          <table className="w-full text-left table-fixed">
+            <colgroup>
+              <col className="w-[20%]" />{/* Company */}
+              <col className="w-[20%]" />{/* Address */}
+              <col className="w-[13%]" />{/* Phone */}
+              <col className="w-[12%]" />{/* Registered Date */}
+              <col className="w-[15%]" />{/* Owner */}
+              <col className="w-[10%]" />{/* Employee Count */}
+              <col className="w-[10%]" />{/* Subscription Plan */}
+            </colgroup>
             <thead>
-              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+              <tr className="bg-gray-100 text-gray-400 text-xs font-semibold uppercase tracking-wider sticky top-0 z-10">
                 <th className="px-6 py-4">Company</th>
                 <th className="px-6 py-4">Address</th>
                 <th className="px-6 py-4">Phone</th>
@@ -93,17 +105,17 @@ const Company = () => {
                 <tr>
                   <td colSpan={7} className="px-6 py-10 text-center text-gray-500">Loading companies...</td>
                 </tr>
-              ) : companies.map((company) => (
+              ) : filteredCompanies.map((company) => (
                 <tr key={company.id} className="hover:bg-gray-50/50 transition-colors group">
                   <td className="px-6 py-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-10 h-10 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium uppercase">
+                      <div className="w-10 h-10 shrink-0 rounded-full bg-blue-600 flex items-center justify-center text-white font-medium uppercase">
                         {company.name.substring(0, 2)}
                       </div>
                       <div className="text-sm font-semibold text-gray-900">{company.name}</div>
                     </div>
                   </td>
-                  <td className="px-6 py-4 text-sm text-gray-600">
+                  <td className="px-6 py-4 text-sm text-gray-600 whitespace-normal break-words">
                     {company.address}
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">
@@ -127,7 +139,7 @@ const Company = () => {
           </table>
         </div>
 
-        <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="p-6 border-t border-gray-50 flex flex-col md:flex-row md:items-center justify-between gap-4 shrink-0">
           <div className="flex items-center space-x-4">
             <span className="text-sm text-gray-500">Rows per page</span>
             <select

@@ -17,7 +17,7 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm">
+        <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40 backdrop-blur-sm">
             <div className="bg-white rounded-3xl shadow-2xl w-full max-w-sm overflow-hidden animate-in fade-in zoom-in duration-300">
                 <div className="p-8 flex flex-col items-center text-center">
                     <div className="w-16 h-16 bg-blue-50 rounded-full flex items-center justify-center mb-6">
@@ -27,9 +27,10 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
                     </div>
 
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
-                    <p className="text-gray-500 font-medium mb-8">
-                        {message}
-                    </p>
+                    <div
+                        className="text-gray-500 font-medium mb-8"
+                        dangerouslySetInnerHTML={{ __html: message }}
+                    />
 
                     <button
                         onClick={onClose}

@@ -15,6 +15,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
     if (!isOpen || !userData) return null;
 
     const { user, currentSubscription, companies, stats } = userData;
+    const monthlyBill = (companies ?? []).reduce((sum: number, company: any) => sum + (company.employeeCount ?? 0) * 100, 0);
     const initials = user.fullName?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??';
 
     const formatDate = (dateString: string | null) => {
@@ -27,7 +28,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 overflow-y-auto">
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
             <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
                 {/* Header */}
                 <div className="px-8 py-6 border-b border-gray-100 flex items-center justify-between">
@@ -40,10 +41,15 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                             <p className="text-gray-500 font-medium">{user.email}</p>
                         </div>
                     </div>
-                    <div className="flex items-center space-x-4">
-                        <span className="bg-green-50 text-green-600 text-sm font-semibold px-4 py-1.5 rounded-full border border-green-100">
-                            {currentSubscription?.status || 'Active'}
-                        </span>
+                    <div className="flex items-center space-x-3">
+                        <div className="flex flex-col items-end gap-1">
+                            <span className={`text-[10px] font-bold px-3 py-0.5 rounded-full border uppercase ${user.accountStatus === 'ACTIVE' ? 'bg-green-50 text-green-600 border-green-100' : 'bg-red-50 text-red-600 border-red-100'}`}>
+                                Account: {user.accountStatus}
+                            </span>
+                            <span className="bg-blue-50 text-blue-600 text-[10px] font-semibold px-3 py-0.5 rounded-full border border-blue-100 uppercase">
+                                Sub: {currentSubscription?.status || 'None'}
+                            </span>
+                        </div>
                         <button
                             onClick={onClose}
                             className="text-gray-400 hover:text-gray-600 transition-colors p-1 rounded-lg hover:bg-gray-100"
@@ -79,17 +85,20 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                             </div>
 
                             {/* Extra Slots Taken Card */}
-                            <div className="p-5 bg-gray-50/50 border border-gray-100 rounded-2xl flex items-center space-x-4">
-                                <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500">
-                                    <UserPlus size={24} />
-                                </div>
-                                <div>
-                                    <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Extra Slots Taken</span>
-                                    <div className="flex items-center space-x-1 mt-1">
-                                        <span className="text-sm font-bold text-orange-500">{(currentSubscription?.extraSlots || 0)} slots used</span>
+                            {currentSubscription?.planName !== 'Free Trial' &&
+                                Boolean(currentSubscription?.extraSlots) && (
+                                    <div className="p-5 bg-gray-50/50 border border-gray-100 rounded-2xl flex items-center space-x-4">
+                                        <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500">
+                                            <UserPlus size={24} />
+                                        </div>
+                                        <div>
+                                            <span className="block text-xs font-bold text-gray-400 uppercase tracking-wider">Extra Slots Taken</span>
+                                            <div className="flex items-center space-x-1 mt-1">
+                                                <span className="text-sm font-bold text-orange-500">{currentSubscription.extraSlots} slots used</span>
+                                            </div>
+                                        </div>
                                     </div>
-                                </div>
-                            </div>
+                                )}
                         </div>
 
                         {/* Right Column - Companies List */}
@@ -135,7 +144,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                         <div className="mb-4 md:mb-0">
                             <p className="text-blue-600 font-semibold mb-1">Monthly Bill:</p>
                             <div className="flex items-baseline space-x-2">
-                                <span className="text-3xl font-extrabold text-blue-700">RS: {stats.monthlyBill.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-3xl font-extrabold text-blue-700">RS: {monthlyBill.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
                             </div>
                         </div>
                         <div className="text-right">

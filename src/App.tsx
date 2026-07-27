@@ -1,4 +1,4 @@
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
@@ -9,9 +9,12 @@ import Login from './pages/Login';
 import ManualPayments from './pages/ManualPayments';
 import FinancialAnalytics from './pages/FinancialAnalytics';
 import { useAppSelector } from './store/hooks';
+import { useEffect } from 'react';
+import DashboardSkeleton from './components/DashboardSkeleton';
 
 function App() {
-  const { token } = useAppSelector((state) => state.auth);
+  const { token, user, isLoading } = useAppSelector((state) => state.auth);
+  const location = useLocation();
 
   // Debug: Check environment variable imports
   console.log('🚀 Env Debug Message:', (window as any).RUNTIME_CONFIG?.VITE_DEBUG_MESSAGE || import.meta.env.VITE_DEBUG_MESSAGE);
@@ -21,15 +24,24 @@ function App() {
   if (!token) {
     return (
       <Routes>
-        <Route path="*" element={<Login onLoginSuccess={() => { }} />} />
+        <Route path="/login" element={<Login onLoginSuccess={() => { }} />} />
+        <Route path="*" element={<Navigate to="/login" replace />} />
       </Routes>
     );
   }
 
+  // Show skeleton ONLY while loading and user is null
+  if (isLoading && !user) {
+    return <DashboardSkeleton />;
+  }
+
+  // If user exists, render app (even if isLoading is true)
+  // This prevents blank page when user data is already loaded
   return (
     <Layout>
       <Routes>
         <Route path="/" element={<Navigate to="/dashboard" replace />} />
+        <Route path="/login" element={<Navigate to="/dashboard" replace />} />
         <Route path="/dashboard" element={<Dashboard />} />
         <Route path="/users" element={<Users />} />
         <Route path="/company" element={<Company />} />

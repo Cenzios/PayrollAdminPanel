@@ -1,4 +1,4 @@
-import { useQuery } from '@tanstack/react-query';
+import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
 import { Building2, FileText, AlertCircle, DollarSign, Users, Building } from 'lucide-react';
 import api from '../utils/axios';
 import StatsCard from '../components/StatsCard';
@@ -7,7 +7,7 @@ import QuickActionCard from '../components/QuickActionCard';
 import DashboardSkeleton from '../components/DashboardSkeleton';
 
 import { useNavigate } from 'react-router-dom';
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
 
@@ -15,20 +15,38 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const userRole = 'System Administrator';
+  const [currentRange, setCurrentRange] = useState('yearly');
+
+  const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const otherRanges = ['monthly', '3months', '6months', 'yearly'].filter(r => r !== currentRange);
+
+    otherRanges.forEach((range) => {
+      queryClient.prefetchQuery({
+        queryKey: ['dashboardStats', range],
+        queryFn: async () => {
+          const response = await api.get(`/admin/dashboard/summary?range=${range}`);
+          return response.data.data;
+        },
+      });
+    });
+  }, []);
 
   useEffect(() => {
     dispatch(setPageTitle({ title: 'Overview', subtitle: userRole }));
   }, [dispatch]);
 
-  const { data: dashboardData, isLoading } = useQuery({
-    queryKey: ['dashboardStats'],
+  const { data: dashboardData, isLoading, isFetching } = useQuery({
+    queryKey: ['dashboardStats', currentRange],
     queryFn: async () => {
-      const response = await api.get('/admin/dashboard/summary');
+      const response = await api.get(`/admin/dashboard/summary?range=${currentRange}`);
       return response.data.data;
     },
+    placeholderData: keepPreviousData,
   });
 
-  if (isLoading) {
+  if (isLoading && !dashboardData) {
     return <DashboardSkeleton />;
   }
 
@@ -59,20 +77,38 @@ const Dashboard = () => {
     return `${diffInDays} days ago`;
   };
 
+  const ACTION_VERBS: Record<string, string> = {
+    POST: 'Created',
+    PUT: 'Updated',
+    PATCH: 'Updated',
+    DELETE: 'Deleted',
+    CREATE: 'Created',
+    UPDATE: 'Updated',
+  };
+
+  const formatActivityAction = (action: string) => {
+    const parts = action.split('_');
+    const verb = ACTION_VERBS[parts[0]] ?? parts[0];
+    const subject = parts.slice(1).join(' ').toLowerCase();
+    const subjectTitle = subject.replace(/\b\w/g, (c) => c.toUpperCase());
+    return `${verb} ${subjectTitle}`;
+  };
+
   const getActivityDescription = (activity: any) => {
     switch (activity.action) {
       case 'CREATE_USER':
-        return `New User registered: ${activity.userName}`;
+        return `New User Registered by ${activity.userName}`;
       case 'CREATE_COMPANY':
-        return `New company registered: ${activity.userName}`;
+      case 'POST_COMPANY':
+        return `New Company Registered by ${activity.userName}`;
       case 'CREATE_EMPLOYEE':
-        return `New employee added by ${activity.userName}`;
+        return `New Employee Added by ${activity.userName}`;
       case 'UPDATE_SALARY':
-        return `Salary calculated by ${activity.userName}`;
+        return `Salary Calculated by ${activity.userName}`;
       case 'CREATE_SUBSCRIPTION':
-        return `New subscription purchased by ${activity.userName}`;
+        return `New Subscription Purchased by ${activity.userName}`;
       default:
-        return `${activity.action.replace('_', ' ')} by ${activity.userName}`;
+        return `${formatActivityAction(activity.action)} by ${activity.userName}`;
     }
   };
 
@@ -94,7 +130,7 @@ const Dashboard = () => {
           icon={Users}
           iconBgColor="bg-[#fdf2f2]"
           iconColor="text-[#ef4444]"
-          trend={{ value: 20, isUp: false, label: 'This week' }}
+        // trend={{ value: 20, isUp: false, label: 'This Month' }}
         />
         <StatsCard
           title="TOTAL COMPANIES"
@@ -102,37 +138,43 @@ const Dashboard = () => {
           icon={Building2}
           iconBgColor="bg-[#f0f9ff]"
           iconColor="text-[#0ea5e9]"
-          trend={{ value: 55, isUp: true, label: 'This week' }}
+        // trend={{ value: 55, isUp: true, label: 'This Month' }}
         />
         <StatsCard
           title="MONTHLY INCOME"
-          value={`LKR ${stats.monthlyRevenue.toLocaleString()}`}
+          value={`Rs ${stats.monthlyRevenue.toLocaleString()}`}
           icon={DollarSign}
           iconBgColor="bg-[#f0fdf4]"
           iconColor="text-[#22c55e]"
-          trend={{ value: 25, isUp: true, label: 'This week' }}
+        // trend={{ value: 25, isUp: true, label: 'This Month' }}
         />
         <StatsCard
           title="TOTAL INCOME"
-          value={`LKR ${stats.totalIncome.toLocaleString()}`}
+          value={`Rs ${stats.totalIncome.toLocaleString()}`}
           icon={DollarSign}
           iconBgColor="bg-[#fffbeb]"
           iconColor="text-[#f59e0b]"
-          trend={{ value: 12, isUp: true, label: 'This month' }}
+        // trend={{ value: 12, isUp: true, label: 'This Month' }}
         />
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
         <div className="lg:col-span-3">
-          <Chart data={chartData} title="User Registrations" />
+          <Chart
+            data={chartData}
+            title="User Registrations"
+            currentRange={currentRange}
+            onRangeChange={setCurrentRange}
+            isFetching={isFetching && chartData.length === 0}
+          />
         </div>
 
-        <div className="lg:col-span-2 space-y-4">
-          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-full">
-            <div className="p-6 border-b border-gray-50 bg-white sticky top-0">
+        <div className="lg:col-span-2">
+          <div className="bg-white rounded-3xl border border-gray-100 shadow-sm overflow-hidden flex flex-col h-[500px]">
+            <div className="p-6 border-b border-gray-50 bg-white flex-shrink-0">
               <h3 className="text-lg font-bold text-gray-800">Recent Activities</h3>
             </div>
-            <div className="flex-1 overflow-y-auto max-h-[400px]">
+            <div className="flex-1 overflow-y-auto overscroll-contain">
               {recentActivities.map((activity: any, index: number) => {
                 const Icon = getActivityIcon(activity.action);
                 return (
@@ -141,9 +183,10 @@ const Dashboard = () => {
                       <Icon className="text-blue-600" size={18} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-900 leading-snug">
-                        {getActivityDescription(activity)}
-                      </p>
+                      <div
+                        className="text-sm font-medium text-gray-900 leading-snug"
+                        dangerouslySetInnerHTML={{ __html: getActivityDescription(activity) }}
+                      />
                       <p className="text-xs text-gray-400 mt-1">{formatTime(activity.createdAt)}</p>
                     </div>
                   </div>
@@ -160,7 +203,7 @@ const Dashboard = () => {
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <QuickActionCard
           title="View Users"
-          subtitle="Payroll Users"
+          subtitle="Registered Users"
           icon={Users}
           iconBgColor="bg-blue-50"
           iconColor="text-blue-600"
