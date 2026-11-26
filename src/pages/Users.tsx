@@ -10,6 +10,7 @@ import UserDetailsModalSkeleton from '../components/UserDetailsModalSkeleton';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../components/ToastContext';
 import { formatPageRange } from '../utils/pagination';
+import { getApiErrorMessage } from '../utils/apiError';
 
 interface User {
   id: string;
@@ -66,7 +67,6 @@ const Users = () => {
     },
   });
 
-  console.log('Users Data:', usersData);
   const rawData = usersData?.data;
   const users = (Array.isArray(rawData) ? rawData : rawData?.users || []) as User[];
   const totalUsers = usersData?.pagination?.total || rawData?.pagination?.total || 0;
@@ -124,8 +124,8 @@ const Users = () => {
     onSuccess: () => {
       showToast('Notification sent successfully!', 'success');
     },
-    onError: (error: any) => {
-      showToast(error.response?.data?.error || 'Failed to send notification', 'error');
+    onError: (error: unknown) => {
+      showToast(getApiErrorMessage(error, 'Failed to send notification'), 'error');
     }
   });
 
@@ -149,8 +149,8 @@ const Users = () => {
       );
       setConfirmState({ isOpen: false, userId: null, action: null });
     },
-    onError: (error: any) => {
-      showToast(error.response?.data?.error || 'Failed to update user status', 'error');
+    onError: (error: unknown) => {
+      showToast(getApiErrorMessage(error, 'Failed to update user status'), 'error');
       setConfirmState({ isOpen: false, userId: null, action: null });
     }
   });

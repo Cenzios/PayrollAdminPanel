@@ -8,7 +8,7 @@ import PricingCard from '../components/PricingCard';
 import EditPlanModal from '../components/EditPlanModal';
 import SuccessModal from '../components/SuccessModal';
 import { createPortal } from 'react-dom';
-import { isAxiosError } from 'axios';
+import { getApiErrorMessage } from '../utils/apiError';
 import { toPlanView } from '../utils/planView';
 import type { Plan, PlanUpdatePayload, SubscriptionPlanView } from '../types';
 import type { ApiEnvelope } from '../auth/authTypes';
@@ -51,11 +51,7 @@ const Subscriptions = () => {
       setIsSuccessModalOpen(true);
     },
     onError: (error: unknown) => {
-      console.error('Failed to save plan:', error);
-      const serverMessage = isAxiosError<{ error?: string; message?: string }>(error)
-        ? error.response?.data?.error || error.response?.data?.message
-        : undefined;
-      showToast(serverMessage || 'Failed to update plan', 'error');
+      showToast(getApiErrorMessage(error, 'Failed to update plan'), 'error');
     }
   });
 

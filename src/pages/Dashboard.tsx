@@ -101,8 +101,6 @@ const Dashboard = () => {
     return <DashboardSkeleton />;
   }
 
-  console.log('Dashboard Data:', dashboardData);
-
   // Handle both nested stats object and flattened response
   const stats = toDashboardStats(dashboardData);
   // Chart boundary: recharts needs plain numbers.

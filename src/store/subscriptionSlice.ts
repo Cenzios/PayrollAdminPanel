@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
-import { isAxiosError } from 'axios';
+import { getApiErrorMessage } from '../utils/apiError';
 import api from '../utils/axios';
 import { toPlanView } from '../utils/planView';
 import type { Plan, PlanUpdatePayload, SubscriptionPlanView } from '../types';
@@ -21,10 +21,7 @@ const initialState: SubscriptionState = {
 };
 
 function extractErrorMessage(err: unknown, fallback: string): string {
-  if (isAxiosError<{ error?: string }>(err)) {
-    return err.response?.data?.error || fallback;
-  }
-  return fallback;
+  return getApiErrorMessage(err, fallback);
 }
 
 export const fetchPlans = createAsyncThunk<Plan[], void, { rejectValue: string }>(

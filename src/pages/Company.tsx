@@ -39,7 +39,6 @@ const Company = () => {
     },
   });
 
-  console.log('Companies Data:', companiesData);
   const rawData = companiesData?.data;
   const companies = (Array.isArray(rawData) ? rawData : rawData?.companies || []) as CompanyData[];
   const totalCompanies = companiesData?.pagination?.total || rawData?.pagination?.total || 0;

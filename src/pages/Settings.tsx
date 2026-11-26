@@ -8,6 +8,7 @@ import { setPageTitle } from "../store/uiSlice";
 import SuccessModal from "../components/SuccessModal";
 import { useToast } from "../components/ToastContext";
 import { validatePassword } from "../utils/valiadtions/passwordValidation";
+import { getApiErrorMessage } from "../utils/apiError";
 
 const Settings = () => {
   const dispatch = useAppDispatch();
@@ -98,11 +99,8 @@ const Settings = () => {
       setIsEditingProfile(false);
       queryClient.invalidateQueries({ queryKey: ["me"] });
     },
-    onError: (error: any) => {
-      showToast(
-        error.response?.data?.error || "Failed to update profile",
-        "error",
-      );
+    onError: (error: unknown) => {
+      showToast(getApiErrorMessage(error, "Failed to update profile"), "error");
     },
   });
 
@@ -128,11 +126,8 @@ const Settings = () => {
         confirmPassword: "",
       });
     },
-    onError: (error: any) => {
-      showToast(
-        error.response?.data?.error || "Failed to change password",
-        "error",
-      );
+    onError: (error: unknown) => {
+      showToast(getApiErrorMessage(error, "Failed to change password"), "error");
     },
   });
 
