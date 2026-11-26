@@ -97,6 +97,8 @@ const Users = () => {
         return 'bg-gray-50 text-gray-600 border-gray-100';
       case 'SUSPENDED':
         return 'bg-red-50 text-red-600 border-red-100';
+      case 'LOCKED':
+        return 'bg-amber-50 text-amber-600 border-amber-100';
       default:
         return 'bg-gray-50 text-gray-600 border-gray-100';
     }
@@ -246,7 +248,7 @@ const Users = () => {
                   </td>
                   <td className="px-3 py-4 text-center">
                     <span className="text-sm text-gray-600 font-medium">
-                      {(user.companyCount ?? 0).toString().padStart(2, '0')}
+                      {user.companyCount ?? 0}
                     </span>
                   </td>
                   <td className="px-3 py-4 text-center">
