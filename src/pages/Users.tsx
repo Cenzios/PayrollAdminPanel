@@ -2,7 +2,7 @@ import { Search, MessageSquare, ChevronLeft, ChevronRight, MoreVertical } from '
 import { useState, useEffect } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useQuery, useMutation, useQueryClient, keepPreviousData } from '@tanstack/react-query';
 import api from '../utils/axios';
 import NotificationModal from '../components/NotificationModal';
 import UserDetailsModal from '../components/UserDetailsModal';
@@ -28,6 +28,7 @@ const Users = () => {
   const { showToast } = useToast();
   const queryClient = useQueryClient();
   const [searchTerm, setSearchTerm] = useState('');
+  const [debouncedSearch, setDebouncedSearch] = useState('');
   const [rowsPerPage, setRowsPerPage] = useState(10);
   const [currentPage, setCurrentPage] = useState(1);
   const [activeMenuId, setActiveMenuId] = useState<string | null>(null);
@@ -56,15 +57,25 @@ const Users = () => {
     action: null,
   });
 
+  // Search runs on the server across every page; debounce keystrokes and restart at page 1
+  useEffect(() => {
+    const handle = window.setTimeout((): void => {
+      setDebouncedSearch(searchTerm.trim());
+      setCurrentPage(1);
+    }, 300);
+    return (): void => window.clearTimeout(handle);
+  }, [searchTerm]);
+
   // Fetch users with data from API
   const { data: usersData, isLoading: isUsersLoading } = useQuery({
-    queryKey: ['users', currentPage, rowsPerPage],
+    queryKey: ['users', currentPage, rowsPerPage, debouncedSearch],
     queryFn: async () => {
       const response = await api.get('/admin/users', {
-        params: { page: currentPage, limit: rowsPerPage }
+        params: { page: currentPage, limit: rowsPerPage, search: debouncedSearch || undefined }
       });
       return response.data;
     },
+    placeholderData: keepPreviousData,
   });
 
   const rawData = usersData?.data;
@@ -80,11 +91,6 @@ const Users = () => {
     },
     enabled: !!selectedUserId,
   });
-
-  const filteredUsers = users.filter(user =>
-    (user.fullName?.toLowerCase().includes(searchTerm.toLowerCase()) || false) ||
-    (user.email?.toLowerCase().includes(searchTerm.toLowerCase()) || false)
-  );
 
   const getStatusStyles = (status: string) => {
     switch (status) {
@@ -135,7 +141,8 @@ const Users = () => {
 
   const statusMutation = useMutation({
     mutationFn: async ({ userId, status }: { userId: string, status: string }) => {
-      const response = await api.put(`/admin/users/${userId}/subscription/status`, { status });
+      // Account status only (suspend / activate): never changes the user's subscription
+      const response = await api.put(`/admin/users/${encodeURIComponent(userId)}/status`, { status });
       return response.data;
     },
     onSuccess: () => {
@@ -230,7 +237,13 @@ const Users = () => {
                 <tr>
                   <td colSpan={8} className="px-6 py-10 text-center text-gray-500">Loading users...</td>
                 </tr>
-              ) : filteredUsers.map((user, index) => (
+              ) : users.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="px-6 py-10 text-center text-gray-400 italic">
+                    {debouncedSearch ? 'No users match your search.' : 'No users found.'}
+                  </td>
+                </tr>
+              ) : users.map((user, index) => (
                 <tr
                   key={user.id}
                   className="hover:bg-gray-50/50 transition-colors group cursor-pointer"
@@ -301,7 +314,7 @@ const Users = () => {
                       </button>
 
                       {activeMenuId === user.id && (
-                        <div className={`absolute right-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10 ${filteredUsers.length - index <= 3 ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'
+                        <div className={`absolute right-0 w-48 bg-white rounded-lg shadow-xl border border-gray-100 py-1 z-10 ${users.length - index <= 3 ? 'bottom-full mb-2 origin-bottom-right' : 'top-full mt-2 origin-top-right'
                           }`}>
                           <button
                             onClick={(e) => {
@@ -336,7 +349,7 @@ const Users = () => {
             <span className="text-sm text-gray-500">Rows per page</span>
             <select
               value={rowsPerPage}
-              onChange={(e) => setRowsPerPage(Number(e.target.value))}
+              onChange={(e) => { setRowsPerPage(Number(e.target.value)); setCurrentPage(1); }}
               className="bg-gray-50 border border-gray-200 text-gray-700 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 p-1"
             >
               <option value={10}>10</option>
