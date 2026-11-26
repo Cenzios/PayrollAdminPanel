@@ -1,24 +1,42 @@
-import type { Plan, PlanFeatureView, SubscriptionPlanView } from '../types';
+import type { Plan, PlanFeatureFlag, PlanFeatureView, SubscriptionPlanView } from '../types';
 
-const COMMON_FEATURES: readonly PlanFeatureView[] = [
-  { text: 'Automatic salary & deduction calculations', included: true },
-  { text: 'Monthly payslip generation (PDF / CSV / Excel', included: true },
-  { text: 'Employee profile management', included: true },
-  { text: 'Manage multiple company', included: true },
-  { text: 'Payroll report generations', included: true },
-  { text: 'Secure dashboard for administrators', included: true },
+/** Included in every plan (not gated by a plan_feature flag). */
+const CORE_FEATURES: readonly string[] = [
+  'Automatic salary & deduction calculations',
+  'Monthly payslip generation',
+  'Employee profile management',
+  'Secure dashboard for administrators',
 ];
 
-// Hardcoded features as requested
-export function getHardcodedFeatures(planName: string): PlanFeatureView[] {
-  const upperName = planName.toUpperCase();
-  if (upperName.includes('BASIC')) {
-    return [{ text: 'Payroll processing for unlimited employees', included: true }, ...COMMON_FEATURES];
-  }
-  if (upperName.includes('PROFESSIONAL')) {
-    return [{ text: 'Payroll processing for 30 - 99 employees', included: true }, ...COMMON_FEATURES];
-  }
-  return [{ text: 'Payroll processing for 100 or more employees', included: true }, ...COMMON_FEATURES];
+/** Display text for known plan_feature flags; unknown flags are humanized from their name. */
+const FEATURE_LABELS: Record<string, string> = {
+  canViewReports: 'Payroll report generation',
+  canExportData: 'Export payslips and reports (PDF / CSV / Excel)',
+  prioritySupport: 'Priority support',
+  customBranding: 'Custom branding',
+};
+
+function humanizeFeatureName(featureName: string): string {
+  const words = featureName.replace(/^can/, '').replace(/([a-z0-9])([A-Z])/g, '$1 $2').trim();
+  return words.charAt(0).toUpperCase() + words.slice(1);
+}
+
+function pluralize(count: number, singular: string, plural: string): string {
+  return `${count} ${count === 1 ? singular : plural}`;
+}
+
+/** Card feature list derived from the plan's real limits and enabled feature flags. */
+export function getPlanFeatures(plan: Pick<Plan, 'maxEmployees' | 'maxCompanies' | 'features'>): PlanFeatureView[] {
+  const enabledFlags = (plan.features ?? []).filter((flag: PlanFeatureFlag): boolean => flag.isEnabled);
+  return [
+    { text: `Payroll processing for up to ${pluralize(plan.maxEmployees, 'employee', 'employees')}`, included: true },
+    { text: `Manage up to ${pluralize(plan.maxCompanies, 'company', 'companies')}`, included: true },
+    ...CORE_FEATURES.map((text): PlanFeatureView => ({ text, included: true })),
+    ...enabledFlags.map((flag): PlanFeatureView => ({
+      text: FEATURE_LABELS[flag.featureName] ?? humanizeFeatureName(flag.featureName),
+      included: true,
+    })),
+  ];
 }
 
 /** Maps an API plan to the card/edit-modal view. Money stays a decimal string. */
@@ -30,6 +48,6 @@ export function toPlanView(plan: Plan): SubscriptionPlanView {
     priceLabel: 'Per employee',
     registrationFee: plan.registrationFee,
     maxEmployees: plan.maxEmployees,
-    features: getHardcodedFeatures(plan.name),
+    features: getPlanFeatures(plan),
   };
 }

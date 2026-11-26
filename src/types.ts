@@ -39,6 +39,13 @@ export interface Plan {
   maxEmployees: number;
   maxCompanies: number;
   description: string;
+  /** Feature flags of the plan (plan_feature rows). */
+  features?: PlanFeatureFlag[];
+}
+
+export interface PlanFeatureFlag {
+  featureName: string;
+  isEnabled: boolean;
 }
 
 export interface PlanFeatureView {
