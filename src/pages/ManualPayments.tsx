@@ -11,8 +11,9 @@ import { useToast } from '../components/ToastContext';
 import { createPortal } from 'react-dom';
 import { formatPageRange } from '../utils/pagination';
 import { getApiErrorMessage } from '../utils/apiError';
-import { formatMoney } from '../utils/money';
 import ConfirmModal from '../components/ConfirmModal';
+import ApprovePaymentModal, { ApprovalTargetInvoice } from '../components/ApprovePaymentModal';
+import { isAxiosError } from 'axios';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -20,14 +21,6 @@ interface User {
     id: string;
     fullName: string;
     email: string;
-}
-
-/** The invoice an approval would settle (pending proofs only). Money is a decimal string. */
-interface TargetInvoice {
-    id: string;
-    billingType: string;
-    billingMonth: string;
-    totalAmount: string;
 }
 
 interface UserDocument {
@@ -39,7 +32,11 @@ interface UserDocument {
     referenceId?: string | null;
     createdAt: string;
     user: User;
-    targetInvoice?: TargetInvoice | null;
+    /** user_document.invoice_id: the invoice the customer uploaded this slip for (null on legacy slips). */
+    invoiceId?: string | null;
+    /** Pending proofs only: the invoice an approval settles, or why it would be refused. */
+    targetInvoice?: ApprovalTargetInvoice | null;
+    targetInvoiceProblem?: string | null;
 }
 
 type TabType = 'PENDING' | 'APPROVED' | 'REJECTED';
@@ -64,17 +61,18 @@ interface PendingDecision {
     doc: UserDocument;
 }
 
-function describeDecision(decision: PendingDecision): string {
-    const who = decision.doc.user.fullName || decision.doc.user.email;
-    if (decision.action === 'reject') {
-        return `Reject the bank slip from ${who}? The customer is emailed and has to upload a new proof. This cannot be undone.`;
-    }
-    const invoice = decision.doc.targetInvoice;
-    if (!invoice) {
-        return `Approve the bank slip from ${who}? This customer has no open invoice, so the approval will be refused.`;
-    }
-    return `Approve the bank slip from ${who}? It settles only the ${invoice.billingType.toLowerCase()} invoice for ${invoice.billingMonth} `
-        + `(Rs ${formatMoney(invoice.totalAmount)}). Check that the slip shows this amount.`;
+function customerName(doc: UserDocument): string {
+    return doc.user.fullName || doc.user.email;
+}
+
+function describeRejection(doc: UserDocument): string {
+    return `Reject the bank slip from ${customerName(doc)}? The customer is emailed and has to upload a new proof. This cannot be undone.`;
+}
+
+interface ApproveVariables {
+    id: string;
+    /** Slip amount typed by the admin (decimal string); the API refuses a mismatch with 422. */
+    amount: string;
 }
 
 const SESSION_KEY = 'manualPayments_activeTab';
@@ -117,18 +115,23 @@ export default function ManualPayments() {
     });
 
     const approveMutation = useMutation({
-        mutationFn: async (id: string): Promise<void> => {
-            await api.post(`/admin/manual-payments/${encodeURIComponent(id)}/approve`);
+        mutationFn: async ({ id, amount }: ApproveVariables): Promise<string> => {
+            const response = await api.post(`/admin/manual-payments/${encodeURIComponent(id)}/approve`, { amount });
+            return typeof response.data?.message === 'string' ? response.data.message : 'Payment approved successfully!';
         },
-        onSuccess: () => {
-            showToast('Payment approved successfully!', 'success');
+        onSuccess: (message: string) => {
+            showToast(message, 'success');
+            setDecision(null);
             queryClient.invalidateQueries({ queryKey: ['manual-payments'] });
         },
         onError: (error: unknown) => {
             showToast(getApiErrorMessage(error, 'Failed to approve payment'), 'error');
-            queryClient.invalidateQueries({ queryKey: ['manual-payments'] });
+            // Amount mismatch (422): keep the dialog open so the admin can re-check the slip
+            if (!(isAxiosError(error) && error.response?.status === 422)) {
+                setDecision(null);
+                queryClient.invalidateQueries({ queryKey: ['manual-payments'] });
+            }
         },
-        onSettled: () => setDecision(null),
     });
 
     const rejectMutation = useMutation({
@@ -153,10 +156,14 @@ export default function ManualPayments() {
         setDecision({ action, doc });
     };
 
-    const handleConfirmDecision = (): void => {
-        if (!decision || approveMutation.isPending || rejectMutation.isPending) return;
-        if (decision.action === 'approve') approveMutation.mutate(decision.doc.id);
-        else rejectMutation.mutate(decision.doc.id);
+    const handleConfirmReject = (): void => {
+        if (!decision || decision.action !== 'reject' || rejectMutation.isPending) return;
+        rejectMutation.mutate(decision.doc.id);
+    };
+
+    const handleConfirmApprove = (amount: string): void => {
+        if (!decision || decision.action !== 'approve' || approveMutation.isPending) return;
+        approveMutation.mutate({ id: decision.doc.id, amount });
     };
 
     // fileUrl is a public third-party (Cloudinary) URL: never attach the admin access token to it.
@@ -499,17 +506,27 @@ export default function ManualPayments() {
             )}
 
             <ConfirmModal
-                isOpen={decision !== null}
-                title={decision?.action === 'reject' ? 'Reject bank slip' : 'Approve bank slip'}
-                message={decision ? describeDecision(decision) : ''}
-                confirmLabel={decision?.action === 'reject'
-                    ? (rejectMutation.isPending ? 'Rejecting…' : 'Reject')
-                    : (approveMutation.isPending ? 'Approving…' : 'Approve')}
+                isOpen={decision?.action === 'reject'}
+                title="Reject bank slip"
+                message={decision?.action === 'reject' ? describeRejection(decision.doc) : ''}
+                confirmLabel={rejectMutation.isPending ? 'Rejecting…' : 'Reject'}
                 cancelLabel="Cancel"
-                confirmTone={decision?.action === 'reject' ? 'danger' : 'primary'}
-                onConfirm={handleConfirmDecision}
-                onCancel={() => { if (!approveMutation.isPending && !rejectMutation.isPending) setDecision(null); }}
+                confirmTone="danger"
+                onConfirm={handleConfirmReject}
+                onCancel={() => { if (!rejectMutation.isPending) setDecision(null); }}
             />
+
+            {decision?.action === 'approve' && (
+                <ApprovePaymentModal
+                    key={decision.doc.id}
+                    customerName={customerName(decision.doc)}
+                    targetInvoice={decision.doc.targetInvoice ?? null}
+                    targetInvoiceProblem={decision.doc.targetInvoiceProblem ?? null}
+                    isSubmitting={approveMutation.isPending}
+                    onConfirm={handleConfirmApprove}
+                    onCancel={() => { if (!approveMutation.isPending) setDecision(null); }}
+                />
+            )}
 
             {/* Click outside to close menu backdrop */}
             {activeMenuId && (
