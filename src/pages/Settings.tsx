@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { User, Mail, Lock, Eye, EyeOff, Edit3 } from "lucide-react";
+import { User, Mail, Lock, Eye, EyeOff, Edit3, Save, X } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import api from "../utils/axios";
 import { useAppDispatch, useAppSelector } from "../store/hooks";
@@ -24,6 +24,9 @@ const Settings = () => {
   useEffect(() => {
     dispatch(setPageTitle({ title: "Settings", subtitle: "Profile Settings" }));
   }, [dispatch]);
+
+  // Profile fields are read-only until "Edit Details" is clicked (same pattern as the customer app)
+  const [isEditingProfile, setIsEditingProfile] = useState(false);
 
   // Profile Form State
   const [profileData, setProfileData] = useState({
@@ -92,6 +95,7 @@ const Settings = () => {
         message: data.message || "Profile updated successfully",
       });
       setIsSuccessModalOpen(true);
+      setIsEditingProfile(false);
       queryClient.invalidateQueries({ queryKey: ["me"] });
     },
     onError: (error: any) => {
@@ -132,9 +136,17 @@ const Settings = () => {
     },
   });
 
-  const handleProfileUpdate = () => {
+  const handleProfileUpdate = (): void => {
     if (!profileData.fullName || !profileData.email) return;
     updateProfileMutation.mutate(profileData);
+  };
+
+  const handleCancelProfileEdit = (): void => {
+    setProfileData({
+      fullName: meData?.fullName || user?.fullName || "",
+      email: meData?.email || user?.email || "",
+    });
+    setIsEditingProfile(false);
   };
 
   // Helper function to validate confirm password
@@ -242,7 +254,8 @@ const Settings = () => {
                         fullName: e.target.value,
                       })
                     }
-                    className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
+                    disabled={!isEditingProfile}
+                    className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
                     placeholder="Enter full name"
                   />
                 </div>
@@ -263,25 +276,49 @@ const Settings = () => {
                     onChange={(e) =>
                       setProfileData({ ...profileData, email: e.target.value })
                     }
-                    className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
+                    disabled={!isEditingProfile}
+                    className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed"
                     placeholder="Enter email address"
                   />
                 </div>
               </div>
 
               <div className="pt-4">
-                <button
-                  onClick={handleProfileUpdate}
-                  disabled={updateProfileMutation.isPending}
-                  className="w-full md:w-auto flex items-center justify-center space-x-2 px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50"
-                >
-                  <Edit3 size={18} />
-                  <span>
-                    {updateProfileMutation.isPending
-                      ? "Updating..."
-                      : "Edit Details"}
-                  </span>
-                </button>
+                {!isEditingProfile ? (
+                  <button
+                    type="button"
+                    onClick={() => setIsEditingProfile(true)}
+                    className="w-full md:w-auto flex items-center justify-center space-x-2 px-8 py-3 bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200"
+                  >
+                    <Edit3 size={18} />
+                    <span>Edit Details</span>
+                  </button>
+                ) : (
+                  <div className="flex flex-col md:flex-row gap-3">
+                    <button
+                      type="button"
+                      onClick={handleCancelProfileEdit}
+                      disabled={updateProfileMutation.isPending}
+                      className="w-full md:w-auto flex items-center justify-center space-x-2 px-8 py-3 whitespace-nowrap bg-white text-gray-700 border border-gray-200 rounded-2xl font-bold hover:bg-gray-50 transition-colors disabled:opacity-50"
+                    >
+                      <X size={18} />
+                      <span>Cancel</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={handleProfileUpdate}
+                      disabled={updateProfileMutation.isPending}
+                      className="w-full md:w-auto flex items-center justify-center space-x-2 px-8 py-3 whitespace-nowrap bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50"
+                    >
+                      <Save size={18} />
+                      <span>
+                        {updateProfileMutation.isPending
+                          ? "Saving..."
+                          : "Save Changes"}
+                      </span>
+                    </button>
+                  </div>
+                )}
               </div>
             </div>
           </div>
