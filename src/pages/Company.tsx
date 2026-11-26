@@ -4,6 +4,7 @@ import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
 import { useQuery } from '@tanstack/react-query';
 import api from '../utils/axios';
+import { formatPageRange } from '../utils/pagination';
 
 interface CompanyData {
   id: string;
@@ -152,7 +153,7 @@ const Company = () => {
               <option value={50}>50</option>
             </select>
             <span className="text-sm text-gray-500">
-              {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalCompanies)} of {totalCompanies}
+              {formatPageRange(currentPage, rowsPerPage, totalCompanies)}
             </span>
           </div>
 

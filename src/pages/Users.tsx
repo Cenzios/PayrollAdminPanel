@@ -9,6 +9,7 @@ import UserDetailsModal from '../components/UserDetailsModal';
 import UserDetailsModalSkeleton from '../components/UserDetailsModalSkeleton';
 import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../components/ToastContext';
+import { formatPageRange } from '../utils/pagination';
 
 interface User {
   id: string;
@@ -343,7 +344,7 @@ const Users = () => {
               <option value={50}>50</option>
             </select>
             <span className="text-sm text-gray-500">
-              {((currentPage - 1) * rowsPerPage) + 1}-{Math.min(currentPage * rowsPerPage, totalUsers)} of {totalUsers}
+              {formatPageRange(currentPage, rowsPerPage, totalUsers)}
             </span>
           </div>
 

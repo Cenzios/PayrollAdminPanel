@@ -10,6 +10,7 @@ import 'react-pdf/dist/Page/AnnotationLayer.css';
 import 'react-pdf/dist/Page/TextLayer.css';
 import { useToast } from '../components/ToastContext';
 import { createPortal } from 'react-dom';
+import { formatPageRange } from '../utils/pagination';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -372,7 +373,7 @@ export default function ManualPayments() {
                             <option value={50}>50</option>
                         </select>
                         <span className="text-sm text-gray-500">
-                            {((currentPage - 1) * rowsPerPage) + 1}–{Math.min(currentPage * rowsPerPage, totalRecords)} of {totalRecords}
+                            {formatPageRange(currentPage, rowsPerPage, totalRecords)}
                         </span>
                     </div>
                     <div className="flex items-center space-x-2">
