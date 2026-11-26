@@ -89,3 +89,38 @@ export interface InvoiceRow {
   createdAt: string;
   user: { fullName: string; email: string };
 }
+
+/** GET /admin/users/:userId (fields used by the user-details modal). Money fields are decimal strings. */
+export interface UserDetails {
+  user: {
+    id: string;
+    fullName: string;
+    email: string;
+    /** ACTIVE | SUSPENDED | LOCKED */
+    accountStatus: string;
+  };
+  currentSubscription: {
+    planName: string;
+    status: string;
+    startDate: string;
+    endDate: string;
+    employeePrice: string;
+    extraSlots: number;
+  } | null;
+  companies: { id: string; name: string; employeeCount: number }[];
+  stats: {
+    totalEmployees: number;
+    /** Plan employeePrice x active employees (decimal string). */
+    monthlyBill: string;
+    nextPaymentDate: string | null;
+  };
+  invoiceHistory: {
+    id: string;
+    /** Decimal string (money). */
+    amount: string;
+    status: string;
+    month: string;
+    type: string;
+    createdAt: string;
+  }[];
+}

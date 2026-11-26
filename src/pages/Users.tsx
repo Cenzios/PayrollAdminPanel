@@ -11,6 +11,8 @@ import ConfirmModal from '../components/ConfirmModal';
 import { useToast } from '../components/ToastContext';
 import { formatPageRange } from '../utils/pagination';
 import { getApiErrorMessage } from '../utils/apiError';
+import type { UserDetails } from '../types';
+import type { ApiEnvelope } from '../auth/authTypes';
 
 interface User {
   id: string;
@@ -85,8 +87,8 @@ const Users = () => {
   // Selective user for detail view
   const { data: userDetails, isLoading: isUserDetailsLoading } = useQuery({
     queryKey: ['userDetails', selectedUserId],
-    queryFn: async () => {
-      const response = await api.get(`/admin/users/${selectedUserId}`);
+    queryFn: async (): Promise<UserDetails> => {
+      const response = await api.get<ApiEnvelope<UserDetails>>(`/admin/users/${encodeURIComponent(selectedUserId ?? '')}`);
       return response.data.data;
     },
     enabled: !!selectedUserId,

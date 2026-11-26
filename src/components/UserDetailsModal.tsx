@@ -1,22 +1,62 @@
 import React from 'react';
 import { X, UserPlus } from 'lucide-react';
-import Decimal from 'decimal.js';
 import { formatMoney } from '../utils/money';
+import type { UserDetails } from '../types';
 
-/** Flat per-employee amount this modal has always used for its monthly bill estimate. */
-const MONTHLY_PRICE_PER_EMPLOYEE = new Decimal(100);
-
-interface CompanySummary {
-    id: string;
-    name: string;
-    employeeCount: number;
-}
+type CompanySummary = UserDetails['companies'][number];
+type InvoiceSummary = UserDetails['invoiceHistory'][number];
 
 interface UserDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
-    userData: any;
+    userData: UserDetails | undefined;
 }
+
+const INVOICE_STATUS_STYLES: Record<string, string> = {
+    PAID: 'bg-green-50 text-green-600 border-green-100',
+    PENDING: 'bg-orange-50 text-orange-600 border-orange-100',
+    OVERDUE: 'bg-red-50 text-red-600 border-red-100',
+    FAILED: 'bg-red-50 text-red-600 border-red-100',
+};
+
+const InvoiceHistory = ({ invoices }: { invoices: InvoiceSummary[] }): JSX.Element => (
+    <div className="mt-8">
+        <h3 className="text-lg font-bold text-gray-800 mb-4 flex items-center">
+            Invoice History
+            <span className="ml-2 bg-gray-100 text-gray-500 text-xs font-bold px-2 py-0.5 rounded-full">{invoices.length}</span>
+        </h3>
+        {invoices.length === 0 ? (
+            <div className="p-6 text-center text-gray-400 border border-gray-100 rounded-2xl">No invoices yet.</div>
+        ) : (
+            <div className="border border-gray-100 rounded-2xl overflow-hidden">
+                <table className="w-full text-left text-sm">
+                    <thead>
+                        <tr className="bg-gray-50 text-gray-400 text-xs font-semibold uppercase tracking-wider">
+                            <th className="px-5 py-3">Month</th>
+                            <th className="px-5 py-3">Type</th>
+                            <th className="px-5 py-3 text-right">Amount</th>
+                            <th className="px-5 py-3 text-center">Status</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-gray-100">
+                        {invoices.map((invoice) => (
+                            <tr key={invoice.id}>
+                                <td className="px-5 py-3 font-medium text-gray-800">{invoice.month}</td>
+                                <td className="px-5 py-3 text-gray-600 capitalize">{invoice.type.toLowerCase()}</td>
+                                <td className="px-5 py-3 text-right font-semibold text-gray-800 tabular-nums">Rs {formatMoney(invoice.amount)}</td>
+                                <td className="px-5 py-3 text-center">
+                                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border ${INVOICE_STATUS_STYLES[invoice.status] ?? 'bg-gray-50 text-gray-600 border-gray-100'}`}>
+                                        {invoice.status}
+                                    </span>
+                                </td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        )}
+    </div>
+);
 
 const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
     isOpen,
@@ -25,15 +65,12 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
 }) => {
     if (!isOpen || !userData) return null;
 
-    const { user, currentSubscription, companies, stats } = userData;
-    const monthlyBill = ((companies ?? []) as CompanySummary[]).reduce(
-        (sum: Decimal, company: CompanySummary): Decimal =>
-            sum.plus(MONTHLY_PRICE_PER_EMPLOYEE.times(company.employeeCount ?? 0)),
-        new Decimal(0)
-    );
+    const { user, currentSubscription, companies, stats, invoiceHistory } = userData;
+    // Computed by the API: plan per-employee price x active employees
+    const monthlyBill = stats.monthlyBill;
     const initials = user.fullName?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??';
 
-    const formatDate = (dateString: string | null) => {
+    const formatDate = (dateString: string | null | undefined): string => {
         if (!dateString) return 'N/A';
         return new Date(dateString).toLocaleDateString('en-US', {
             month: 'short',
@@ -100,8 +137,8 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                             </div>
 
                             {/* Extra Slots Taken Card */}
-                            {currentSubscription?.planName !== 'Free Trial' &&
-                                Boolean(currentSubscription?.extraSlots) && (
+                            {currentSubscription && currentSubscription.planName !== 'Free Trial' &&
+                                Boolean(currentSubscription.extraSlots) && (
                                     <div className="p-5 bg-gray-50/50 border border-gray-100 rounded-2xl flex items-center space-x-4">
                                         <div className="w-12 h-12 bg-orange-50 rounded-xl flex items-center justify-center text-orange-500">
                                             <UserPlus size={24} />
@@ -161,12 +198,19 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                             <div className="flex items-baseline space-x-2">
                                 <span className="text-3xl font-extrabold text-blue-700">RS: {formatMoney(monthlyBill)}</span>
                             </div>
+                            {currentSubscription && (
+                                <p className="text-xs text-blue-500 mt-1">
+                                    Rs {formatMoney(currentSubscription.employeePrice)} x {stats.totalEmployees} active employees
+                                </p>
+                            )}
                         </div>
                         <div className="text-right">
                             <p className="text-blue-600 font-semibold mb-1">Next payment date</p>
                             <p className="text-lg font-bold text-blue-700">{formatDate(stats.nextPaymentDate)}</p>
                         </div>
                     </div>
+
+                    <InvoiceHistory invoices={invoiceHistory ?? []} />
                 </div>
             </div>
         </div>
