@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { loginUser, clearError, logout } from '../store/authSlice';
+import { loginUser, clearError } from '../store/authSlice';
 import { Mail, Lock, Loader2 } from 'lucide-react';
 import logo from '../assets/images/logo-login.svg';
 import illustrationAsset from '../assets/images/Ilustration-Asset.svg';
@@ -19,7 +19,7 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
     const [showPassword, setShowPassword] = useState(false);
 
     const dispatch = useAppDispatch();
-    const { isLoading, error, token } = useAppSelector((state) => state.auth);
+    const { isLoading, error } = useAppSelector((state) => state.auth);
 
     const [formData, setFormData] = useState({
         email: '',
@@ -30,13 +30,6 @@ const Login = ({ onLoginSuccess }: LoginProps) => {
         email: '',
         password: '',
     });
-
-    // Clear any existing session when user visits login page
-    useEffect(() => {
-        if (token) {
-            dispatch(logout());
-        }
-    }, []);
 
     useEffect(() => {
         return () => {

@@ -1,4 +1,5 @@
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useEffect } from 'react';
 import Layout from './components/Layout';
 import Dashboard from './pages/Dashboard';
 import Users from './pages/Users';
@@ -8,20 +9,35 @@ import Settings from './pages/Settings';
 import Login from './pages/Login';
 import ManualPayments from './pages/ManualPayments';
 import FinancialAnalytics from './pages/FinancialAnalytics';
-import { useAppSelector } from './store/hooks';
-import { useEffect } from 'react';
+import { useAppDispatch, useAppSelector } from './store/hooks';
+import { restoreSession } from './store/authSlice';
 import DashboardSkeleton from './components/DashboardSkeleton';
+import { getApiBaseUrl, getDebugMessage } from './config/runtimeConfig';
 
-function App() {
-  const { token, user, isLoading } = useAppSelector((state) => state.auth);
-  const location = useLocation();
+function SessionLoader(): JSX.Element {
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full animate-spin" />
+    </div>
+  );
+}
 
-  // Debug: Check environment variable imports
-  console.log('🚀 Env Debug Message:', (window as any).RUNTIME_CONFIG?.VITE_DEBUG_MESSAGE || import.meta.env.VITE_DEBUG_MESSAGE);
-  console.log('🔗 Base API URL:', (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL);
+function App(): JSX.Element {
+  const dispatch = useAppDispatch();
+  const { isAuthenticated, isBootstrapping, user, isLoading } = useAppSelector((state) => state.auth);
 
-  // If no token, show login page only
-  if (!token) {
+  // Restore the session from the HttpOnly refresh cookie before any protected route renders.
+  useEffect(() => {
+    console.log('🚀 Env Debug Message:', getDebugMessage());
+    console.log('🔗 Base API URL:', getApiBaseUrl());
+    void dispatch(restoreSession());
+  }, [dispatch]);
+
+  if (isBootstrapping) {
+    return <SessionLoader />;
+  }
+
+  if (!isAuthenticated) {
     return (
       <Routes>
         <Route path="/login" element={<Login onLoginSuccess={() => { }} />} />
@@ -35,8 +51,6 @@ function App() {
     return <DashboardSkeleton />;
   }
 
-  // If user exists, render app (even if isLoading is true)
-  // This prevents blank page when user data is already loaded
   return (
     <Layout>
       <Routes>

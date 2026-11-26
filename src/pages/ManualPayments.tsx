@@ -1,7 +1,8 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import axios from 'axios';
-import { useAppDispatch, useAppSelector } from '../store/hooks';
+import { isAxiosError } from 'axios';
+import api from '../utils/axios';
+import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
 import { Search, MoreVertical, Check, X, FileText, ChevronLeft, ChevronRight, Loader2 } from 'lucide-react';
 import { Document, Page, pdfjs } from 'react-pdf';
@@ -33,7 +34,6 @@ type TabType = 'PENDING' | 'APPROVED';
 const SESSION_KEY = 'manualPayments_activeTab';
 
 export default function ManualPayments() {
-    const { token } = useAppSelector((state) => state.auth);
     const dispatch = useAppDispatch();
     const queryClient = useQueryClient();
     const { showToast } = useToast();
@@ -61,24 +61,17 @@ export default function ManualPayments() {
         sessionStorage.setItem(SESSION_KEY, activeTab);
     }, [activeTab]);
 
-    const API_BASE_URL = (window as any).RUNTIME_CONFIG?.VITE_API_BASE_URL || import.meta.env.VITE_API_BASE_URL;
-
     const { data: documents = [], isLoading } = useQuery<UserDocument[]>({
         queryKey: ['manual-payments', activeTab],
-        queryFn: async () => {
-            const response = await axios.get(`${API_BASE_URL}/admin/manual-payments?status=${activeTab}`, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+        queryFn: async (): Promise<UserDocument[]> => {
+            const response = await api.get('/admin/manual-payments', { params: { status: activeTab } });
             return response.data.data;
         },
-        enabled: !!token,
     });
 
     const approveMutation = useMutation({
-        mutationFn: async (id: string) => {
-            await axios.post(`${API_BASE_URL}/admin/manual-payments/${id}/approve`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+        mutationFn: async (id: string): Promise<void> => {
+            await api.post(`/admin/manual-payments/${encodeURIComponent(id)}/approve`);
         },
         onSuccess: () => {
             showToast('Payment approved successfully!', 'success');
@@ -87,9 +80,9 @@ export default function ManualPayments() {
             setActiveMenuId(null);
             setMenuPosition(null);
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
             showToast(
-                error.response?.data?.message || 'Failed to approve payment',
+                (isAxiosError<{ message?: string }>(error) && error.response?.data?.message) || 'Failed to approve payment',
                 'error'
             );
             setActiveMenuId(null);
@@ -98,10 +91,8 @@ export default function ManualPayments() {
     });
 
     const rejectMutation = useMutation({
-        mutationFn: async (id: string) => {
-            await axios.post(`${API_BASE_URL}/admin/manual-payments/${id}/reject`, {}, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+        mutationFn: async (id: string): Promise<void> => {
+            await api.post(`/admin/manual-payments/${encodeURIComponent(id)}/reject`);
         },
         onSuccess: () => {
             showToast('⚠️ Payment rejected successfully!', 'success');
@@ -109,9 +100,9 @@ export default function ManualPayments() {
             setActiveMenuId(null);
             setMenuPosition(null);
         },
-        onError: (error: any) => {
+        onError: (error: unknown) => {
             showToast(
-                error.response?.data?.message || 'Failed to reject payment',
+                (isAxiosError<{ message?: string }>(error) && error.response?.data?.message) || 'Failed to reject payment',
                 'error'
             );
             setActiveMenuId(null);
@@ -119,13 +110,12 @@ export default function ManualPayments() {
         }
     });
 
-    const loadPdfAsBlob = async (url: string) => {
+    // fileUrl is a public third-party (Cloudinary) URL: never attach the admin access token to it.
+    const loadPdfAsBlob = async (url: string): Promise<void> => {
         setPdfLoading(true);
         setPdfBlobUrl(null);
         try {
-            const response = await fetch(url, {
-                headers: { Authorization: `Bearer ${token}` }
-            });
+            const response = await fetch(url);
             if (!response.ok) throw new Error(`HTTP ${response.status}`);
             const blob = await response.blob();
             const objectUrl = URL.createObjectURL(blob);

@@ -1,9 +1,9 @@
 import { ReactNode, useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useQueryClient } from '@tanstack/react-query';
 import Sidebar from './Sidebar';
 import { useAppSelector, useAppDispatch } from '../store/hooks';
-import { logout } from '../store/authSlice';
-import { fetchMe } from '../store/authSlice';
+import { fetchMe, logoutUser } from '../store/authSlice';
 import { LogOut, User as UserIcon, ChevronDown } from 'lucide-react';
 import { ToastProvider } from './ToastContext';
 import ToastContainer from './ToastContainer';
@@ -15,14 +15,15 @@ interface LayoutProps {
 const Layout = ({ children }: LayoutProps) => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { user, token } = useAppSelector((state) => state.auth);
+  const queryClient = useQueryClient();
+  const { user, isAuthenticated } = useAppSelector((state) => state.auth);
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
   useEffect(() => {
-    if (token && !user) {
+    if (isAuthenticated && !user) {
       dispatch(fetchMe());
     }
-  }, [dispatch, token, user]);
+  }, [dispatch, isAuthenticated, user]);
 
   const userName = user?.fullName || '';
   const initials = userName
@@ -33,15 +34,12 @@ const Layout = ({ children }: LayoutProps) => {
         .toUpperCase()
     : '';
 
-  const handleLogout = () => {
-    // Clear the token first
-    dispatch(logout());
-    
-    // Force navigation to login and replace history
-    navigate('/login', { replace: true });
-    
-    // Close dropdown
+  const handleLogout = async (): Promise<void> => {
     setIsDropdownOpen(false);
+    // Revoke the server session + refresh cookie, then clear in-memory state
+    await dispatch(logoutUser());
+    queryClient.clear();
+    navigate('/login', { replace: true });
   };
 
   const { title, subtitle } = useAppSelector((state) => state.ui);
@@ -95,8 +93,7 @@ const Layout = ({ children }: LayoutProps) => {
                       <button
                         className="w-full px-4 py-2 text-left text-sm text-red-600 hover:bg-red-50 flex items-center gap-2"
                         onClick={() => {
-                          setIsDropdownOpen(false);
-                          handleLogout();
+                          void handleLogout();
                         }}
                       >
                         <LogOut className="h-4 w-4" />
