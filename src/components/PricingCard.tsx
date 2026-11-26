@@ -32,14 +32,17 @@ const PricingCard = ({
       </h3>
 
       <div className="mb-2">
-        <div className="flex items-baseline">
-          <span className="text-4xl font-bold text-blue-600">Rs: {formatMoney(price)}</span>
-          <span className="ml-2 text-gray-600 font-medium">{priceLabel}</span>
+        {/* Price never wraps; the label drops to the next line if the card is too narrow */}
+        <div className="flex flex-wrap items-baseline gap-x-2">
+          <span className="whitespace-nowrap text-2xl xl:text-3xl font-bold text-blue-600 tabular-nums">
+            Rs {formatMoney(price)}
+          </span>
+          <span className="whitespace-nowrap text-gray-600 font-medium">{priceLabel}</span>
         </div>
       </div>
 
       <p className="text-sm text-gray-500 mb-8">
-        Rs: {formatMoney(registrationFee)} (one time registration fee)
+        Rs {formatMoney(registrationFee)} (one time registration fee)
       </p>
 
       <div className="space-y-4 mb-8">
