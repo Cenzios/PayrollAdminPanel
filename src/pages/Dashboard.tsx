@@ -1,4 +1,4 @@
-import { useQuery, keepPreviousData, useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import { Building2, FileText, AlertCircle, DollarSign, Users, Building } from 'lucide-react';
 import api from '../utils/axios';
 import StatsCard from '../components/StatsCard';
@@ -28,9 +28,13 @@ interface DashboardChartPoint {
   value: number | string;
 }
 
+type ChartRange = 'monthly' | '3months' | '6months' | 'yearly';
+
 interface DashboardSummary extends Partial<DashboardStats> {
   stats?: DashboardStats;
   chartData?: DashboardChartPoint[];
+  /** Every chart range in one response, so range switches need no extra request. */
+  chartDataByRange?: Partial<Record<ChartRange, DashboardChartPoint[]>>;
   recentActivities?: RecentActivity[];
 }
 
@@ -40,6 +44,23 @@ interface RecentActivity {
   userName: string;
   createdAt: string;
   resourceType?: string;
+  endpoint?: string;
+}
+
+const CHART_RANGES: readonly ChartRange[] = ['monthly', '3months', '6months', 'yearly'];
+
+function isChartRange(value: string): value is ChartRange {
+  return (CHART_RANGES as readonly string[]).includes(value);
+}
+
+/** Customer auth housekeeping that is not a user action (also filtered by the API). */
+const AUTH_NOISE_ENDPOINTS: readonly string[] = ['/api/v1/auth/refresh', '/api/v1/auth/check-lock-status'];
+
+function isMeaningfulActivity(activity: RecentActivity): boolean {
+  const endpoint = activity.endpoint ?? '';
+  if (AUTH_NOISE_ENDPOINTS.some((noise) => endpoint.startsWith(noise))) return false;
+  // Anonymous auth calls would read as "Created Auth by System"
+  return !(activity.action === 'POST_AUTH' && activity.userName === 'System');
 }
 
 const EMPTY_STATS: DashboardStats = {
@@ -50,8 +71,8 @@ const EMPTY_STATS: DashboardStats = {
   totalIncome: '0',
 };
 
-async function fetchDashboardSummary(range: string): Promise<DashboardSummary> {
-  const response = await api.get('/admin/dashboard/summary', { params: { range } });
+async function fetchDashboardSummary(): Promise<DashboardSummary> {
+  const response = await api.get('/admin/dashboard/summary');
   return response.data.data;
 }
 
@@ -72,29 +93,16 @@ const Dashboard = () => {
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const userRole = 'System Administrator';
-  const [currentRange, setCurrentRange] = useState('yearly');
-
-  const queryClient = useQueryClient();
-
-  useEffect(() => {
-    const otherRanges = ['monthly', '3months', '6months', 'yearly'].filter(r => r !== currentRange);
-
-    otherRanges.forEach((range) => {
-      queryClient.prefetchQuery({
-        queryKey: ['dashboardStats', range],
-        queryFn: () => fetchDashboardSummary(range),
-      });
-    });
-  }, []);
+  const [currentRange, setCurrentRange] = useState<ChartRange>('yearly');
 
   useEffect(() => {
     dispatch(setPageTitle({ title: 'Overview', subtitle: userRole }));
   }, [dispatch]);
 
+  // One summary request per load; the range only selects which chart series is shown
   const { data: dashboardData, isLoading, isFetching } = useQuery({
-    queryKey: ['dashboardStats', currentRange],
-    queryFn: () => fetchDashboardSummary(currentRange),
-    placeholderData: keepPreviousData,
+    queryKey: ['dashboardStats'],
+    queryFn: fetchDashboardSummary,
   });
 
   if (isLoading && !dashboardData) {
@@ -104,11 +112,12 @@ const Dashboard = () => {
   // Handle both nested stats object and flattened response
   const stats = toDashboardStats(dashboardData);
   // Chart boundary: recharts needs plain numbers.
-  const chartData = (dashboardData?.chartData ?? []).map((point) => ({
+  const chartPoints = dashboardData?.chartDataByRange?.[currentRange] ?? dashboardData?.chartData ?? [];
+  const chartData = chartPoints.map((point) => ({
     month: point.month,
     value: Number(point.value),
   }));
-  const recentActivities = dashboardData?.recentActivities ?? [];
+  const recentActivities = (dashboardData?.recentActivities ?? []).filter(isMeaningfulActivity);
 
   const formatTime = (dateString: string) => {
     const now = new Date();
@@ -211,7 +220,7 @@ const Dashboard = () => {
             data={chartData}
             title="User Registrations"
             currentRange={currentRange}
-            onRangeChange={setCurrentRange}
+            onRangeChange={(range: string): void => setCurrentRange(isChartRange(range) ? range : 'yearly')}
             isFetching={isFetching && chartData.length === 0}
           />
         </div>
