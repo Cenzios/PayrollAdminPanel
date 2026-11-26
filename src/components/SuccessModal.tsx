@@ -27,10 +27,10 @@ const SuccessModal: React.FC<SuccessModalProps> = ({
                     </div>
 
                     <h2 className="text-2xl font-bold text-gray-900 mb-2">{title}</h2>
-                    <div
-                        className="text-gray-500 font-medium mb-8"
-                        dangerouslySetInnerHTML={{ __html: message }}
-                    />
+                    {/* Rendered as text (messages can come from the server); line breaks are kept via CSS */}
+                    <div className="text-gray-500 font-medium mb-8 whitespace-pre-line break-words">
+                        {message}
+                    </div>
 
                     <button
                         onClick={onClose}
