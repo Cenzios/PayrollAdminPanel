@@ -35,6 +35,9 @@ const Settings = () => {
     email: user?.email || "",
   });
 
+  // Re-authentication for an email change (the email is the login identifier)
+  const [emailChangePassword, setEmailChangePassword] = useState("");
+
   // Password Form State
   const [passwordData, setPasswordData] = useState({
     currentPassword: "",
@@ -85,8 +88,12 @@ const Settings = () => {
     }
   }, [meData, dispatch]);
 
+  const currentEmail: string = meData?.email || user?.email || "";
+  const isEmailChanged =
+    profileData.email.trim().toLowerCase() !== currentEmail.toLowerCase();
+
   const updateProfileMutation = useMutation({
-    mutationFn: async (data: { fullName: string; email: string }) => {
+    mutationFn: async (data: { fullName: string; email: string; currentPassword?: string }) => {
       const response = await api.put("/admin/settings/profile", data);
       return response.data;
     },
@@ -97,6 +104,7 @@ const Settings = () => {
       });
       setIsSuccessModalOpen(true);
       setIsEditingProfile(false);
+      setEmailChangePassword("");
       queryClient.invalidateQueries({ queryKey: ["me"] });
     },
     onError: (error: unknown) => {
@@ -105,7 +113,7 @@ const Settings = () => {
   });
 
   const changePasswordMutation = useMutation({
-    mutationFn: async (data: any) => {
+    mutationFn: async (data: { currentPassword: string; newPassword: string }) => {
       const response = await api.put("/admin/settings/change-password", data);
       return response.data;
     },
@@ -133,7 +141,14 @@ const Settings = () => {
 
   const handleProfileUpdate = (): void => {
     if (!profileData.fullName || !profileData.email) return;
-    updateProfileMutation.mutate(profileData);
+    if (isEmailChanged && !emailChangePassword) {
+      showToast("Enter your current password to change the email address", "error");
+      return;
+    }
+    updateProfileMutation.mutate({
+      ...profileData,
+      ...(isEmailChanged ? { currentPassword: emailChangePassword } : {}),
+    });
   };
 
   const handleCancelProfileEdit = (): void => {
@@ -141,6 +156,7 @@ const Settings = () => {
       fullName: meData?.fullName || user?.fullName || "",
       email: meData?.email || user?.email || "",
     });
+    setEmailChangePassword("");
     setIsEditingProfile(false);
   };
 
@@ -278,6 +294,31 @@ const Settings = () => {
                 </div>
               </div>
 
+              {isEditingProfile && isEmailChanged && (
+                <div className="space-y-2">
+                  <label className="text-sm font-bold text-gray-700 ml-1">
+                    Current Password
+                  </label>
+                  <div className="relative">
+                    <Lock
+                      className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400"
+                      size={20}
+                    />
+                    <input
+                      type="password"
+                      value={emailChangePassword}
+                      onChange={(e) => setEmailChangePassword(e.target.value)}
+                      autoComplete="current-password"
+                      className="w-full pl-12 pr-4 py-4 bg-white border border-gray-200 rounded-2xl focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all shadow-sm"
+                      placeholder="Required to change your email"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500 ml-1">
+                    Your email is your login. Confirm the change with your current password.
+                  </p>
+                </div>
+              )}
+
               <div className="pt-4">
                 {!isEditingProfile ? (
                   <button
@@ -302,7 +343,7 @@ const Settings = () => {
                     <button
                       type="button"
                       onClick={handleProfileUpdate}
-                      disabled={updateProfileMutation.isPending}
+                      disabled={updateProfileMutation.isPending || (isEmailChanged && !emailChangePassword)}
                       className="w-full md:w-auto flex items-center justify-center space-x-2 px-8 py-3 whitespace-nowrap bg-blue-600 text-white rounded-2xl font-bold hover:bg-blue-700 transition-colors shadow-lg shadow-blue-200 disabled:opacity-50"
                     >
                       <Save size={18} />
