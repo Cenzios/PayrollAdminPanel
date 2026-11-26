@@ -10,6 +10,63 @@ import { useNavigate } from 'react-router-dom';
 import { useEffect, useState } from 'react';
 import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
+import { formatMoney } from '../utils/money';
+
+interface DashboardStats {
+  activeUsers: number;
+  totalCompanies: number;
+  totalEmployees: number;
+  /** Decimal string (money). */
+  monthlyRevenue: string;
+  /** Decimal string (money). */
+  totalIncome: string;
+}
+
+interface DashboardChartPoint {
+  month: string;
+  /** Registration count; tolerated as string in case the API serializes it. */
+  value: number | string;
+}
+
+interface DashboardSummary extends Partial<DashboardStats> {
+  stats?: DashboardStats;
+  chartData?: DashboardChartPoint[];
+  recentActivities?: RecentActivity[];
+}
+
+interface RecentActivity {
+  id: string;
+  action: string;
+  userName: string;
+  createdAt: string;
+  resourceType?: string;
+}
+
+const EMPTY_STATS: DashboardStats = {
+  activeUsers: 0,
+  totalCompanies: 0,
+  totalEmployees: 0,
+  monthlyRevenue: '0',
+  totalIncome: '0',
+};
+
+async function fetchDashboardSummary(range: string): Promise<DashboardSummary> {
+  const response = await api.get('/admin/dashboard/summary', { params: { range } });
+  return response.data.data;
+}
+
+/** Normalizes the API summary into stats with string money fields. */
+function toDashboardStats(summary: DashboardSummary | undefined): DashboardStats {
+  const source = summary?.stats ?? summary;
+  if (!source) return EMPTY_STATS;
+  return {
+    activeUsers: source.activeUsers ?? 0,
+    totalCompanies: source.totalCompanies ?? 0,
+    totalEmployees: source.totalEmployees ?? 0,
+    monthlyRevenue: String(source.monthlyRevenue ?? '0'),
+    totalIncome: String(source.totalIncome ?? '0'),
+  };
+}
 
 const Dashboard = () => {
   const navigate = useNavigate();
@@ -25,10 +82,7 @@ const Dashboard = () => {
     otherRanges.forEach((range) => {
       queryClient.prefetchQuery({
         queryKey: ['dashboardStats', range],
-        queryFn: async () => {
-          const response = await api.get(`/admin/dashboard/summary?range=${range}`);
-          return response.data.data;
-        },
+        queryFn: () => fetchDashboardSummary(range),
       });
     });
   }, []);
@@ -39,10 +93,7 @@ const Dashboard = () => {
 
   const { data: dashboardData, isLoading, isFetching } = useQuery({
     queryKey: ['dashboardStats', currentRange],
-    queryFn: async () => {
-      const response = await api.get(`/admin/dashboard/summary?range=${currentRange}`);
-      return response.data.data;
-    },
+    queryFn: () => fetchDashboardSummary(currentRange),
     placeholderData: keepPreviousData,
   });
 
@@ -53,15 +104,13 @@ const Dashboard = () => {
   console.log('Dashboard Data:', dashboardData);
 
   // Handle both nested stats object and flattened response
-  const stats = dashboardData?.stats || dashboardData || {
-    activeUsers: 0,
-    totalCompanies: 0,
-    totalEmployees: 0,
-    monthlyRevenue: 0,
-    totalIncome: 0,
-  };
-  const chartData = dashboardData?.chartData || [];
-  const recentActivities = dashboardData?.recentActivities || [];
+  const stats = toDashboardStats(dashboardData);
+  // Chart boundary: recharts needs plain numbers.
+  const chartData = (dashboardData?.chartData ?? []).map((point) => ({
+    month: point.month,
+    value: Number(point.value),
+  }));
+  const recentActivities = dashboardData?.recentActivities ?? [];
 
   const formatTime = (dateString: string) => {
     const now = new Date();
@@ -94,7 +143,7 @@ const Dashboard = () => {
     return `${verb} ${subjectTitle}`;
   };
 
-  const getActivityDescription = (activity: any) => {
+  const getActivityDescription = (activity: RecentActivity): string => {
     switch (activity.action) {
       case 'CREATE_USER':
         return `New User Registered by ${activity.userName}`;
@@ -142,7 +191,7 @@ const Dashboard = () => {
         />
         <StatsCard
           title="MONTHLY INCOME"
-          value={`Rs ${stats.monthlyRevenue.toLocaleString()}`}
+          value={`Rs ${formatMoney(stats.monthlyRevenue)}`}
           icon={DollarSign}
           iconBgColor="bg-[#f0fdf4]"
           iconColor="text-[#22c55e]"
@@ -150,7 +199,7 @@ const Dashboard = () => {
         />
         <StatsCard
           title="TOTAL INCOME"
-          value={`Rs ${stats.totalIncome.toLocaleString()}`}
+          value={`Rs ${formatMoney(stats.totalIncome)}`}
           icon={DollarSign}
           iconBgColor="bg-[#fffbeb]"
           iconColor="text-[#f59e0b]"
@@ -175,7 +224,7 @@ const Dashboard = () => {
               <h3 className="text-lg font-bold text-gray-800">Recent Activities</h3>
             </div>
             <div className="flex-1 overflow-y-auto overscroll-contain">
-              {recentActivities.map((activity: any, index: number) => {
+              {recentActivities.map((activity, index) => {
                 const Icon = getActivityIcon(activity.action);
                 return (
                   <div key={activity.id} className={`p-5 flex items-start space-x-4 hover:bg-gray-50 transition-colors ${index !== recentActivities.length - 1 ? 'border-b border-gray-50' : ''}`}>

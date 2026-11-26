@@ -1,4 +1,5 @@
 import { Check, Edit } from 'lucide-react';
+import { formatMoney } from '../utils/money';
 
 interface PricingFeature {
   text: string;
@@ -7,9 +8,11 @@ interface PricingFeature {
 
 interface PricingCardProps {
   planName: string;
-  price: number;
+  /** Decimal string (money). */
+  price: string;
   priceLabel: string;
-  registrationFee: number;
+  /** Decimal string (money). */
+  registrationFee: string;
   features: PricingFeature[];
   onEdit?: () => void;
 }
@@ -21,7 +24,7 @@ const PricingCard = ({
   registrationFee,
   features,
   onEdit,
-}: PricingCardProps) => {
+}: PricingCardProps): JSX.Element => {
   return (
     <div className="bg-white rounded-xl p-8 shadow-sm border border-gray-100 hover:shadow-lg transition-shadow">
       <h3 className="text-xl font-semibold text-gray-900 mb-6 tracking-wide uppercase">
@@ -30,13 +33,13 @@ const PricingCard = ({
 
       <div className="mb-2">
         <div className="flex items-baseline">
-          <span className="text-4xl font-bold text-blue-600">Rs: {price}</span>
+          <span className="text-4xl font-bold text-blue-600">Rs: {formatMoney(price)}</span>
           <span className="ml-2 text-gray-600 font-medium">{priceLabel}</span>
         </div>
       </div>
 
       <p className="text-sm text-gray-500 mb-8">
-        Rs: {registrationFee.toLocaleString()} (one time registration fee)
+        Rs: {formatMoney(registrationFee)} (one time registration fee)
       </p>
 
       <div className="space-y-4 mb-8">

@@ -8,13 +8,17 @@ import PricingCard from '../components/PricingCard';
 import EditPlanModal from '../components/EditPlanModal';
 import SuccessModal from '../components/SuccessModal';
 import { createPortal } from 'react-dom';
+import { isAxiosError } from 'axios';
+import { toPlanView } from '../utils/planView';
+import type { Plan, PlanUpdatePayload, SubscriptionPlanView } from '../types';
+import type { ApiEnvelope } from '../auth/authTypes';
 
 const Subscriptions = () => {
   const queryClient = useQueryClient();
   const { showToast } = useToast();
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [isSuccessModalOpen, setIsSuccessModalOpen] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [selectedPlan, setSelectedPlan] = useState<SubscriptionPlanView | null>(null);
 
   const dispatch = useAppDispatch();
 
@@ -22,66 +26,41 @@ const Subscriptions = () => {
     dispatch(setPageTitle({ title: 'Edit Subscription Plans' }));
   }, [dispatch]);
 
-  // Hardcoded features as requested
-  const getHardcodedFeatures = (planName: string) => {
-    const commonFeatures = [
-      { text: 'Automatic salary & deduction calculations', included: true },
-      { text: 'Monthly payslip generation (PDF / CSV / Excel', included: true },
-      { text: 'Employee profile management', included: true },
-      { text: 'Manage multiple company', included: true },
-      { text: 'Payroll report generations', included: true },
-      { text: 'Secure dashboard for administrators', included: true },
-    ];
-
-    if (planName.toUpperCase().includes('BASIC')) {
-      return [{ text: 'Payroll processing for unlimited employees', included: true }, ...commonFeatures];
-    } else if (planName.toUpperCase().includes('PROFESSIONAL')) {
-      return [{ text: 'Payroll processing for 30 - 99 employees', included: true }, ...commonFeatures];
-    } else {
-      return [{ text: 'Payroll processing for 100 or more employees', included: true }, ...commonFeatures];
-    }
-  };
-
   const { data: plansData, isLoading } = useQuery({
     queryKey: ['plans'],
-    queryFn: async () => {
-      const response = await api.get('/admin/plans');
-      return response.data.data.map((plan: any) => ({
-        id: plan.id,
-        name: plan.name,
-        price: plan.employeePrice,
-        priceLabel: 'Per employee',
-        registrationFee: plan.registrationFee,
-        maxEmployees: plan.maxEmployees,
-        features: getHardcodedFeatures(plan.name),
-      }));
+    queryFn: async (): Promise<SubscriptionPlanView[]> => {
+      const response = await api.get<ApiEnvelope<Plan[]>>('/admin/plans');
+      return response.data.data.map(toPlanView);
     },
   });
 
   const plans = plansData || [];
 
-  const handleEdit = (plan: any) => {
+  const handleEdit = (plan: SubscriptionPlanView): void => {
     setSelectedPlan(plan);
     setIsEditModalOpen(true);
   };
 
   const updateMutation = useMutation({
-    mutationFn: async ({ id, data }: { id: string; data: any }) => {
-      const response = await api.put(`/admin/plans/${id}`, data);
+    mutationFn: async ({ id, data }: PlanUpdatePayload): Promise<ApiEnvelope<Plan>> => {
+      const response = await api.put<ApiEnvelope<Plan>>(`/admin/plans/${encodeURIComponent(id)}`, data);
       return response.data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['plans'] });
       setIsSuccessModalOpen(true);
     },
-    onError: (error: any) => {
+    onError: (error: unknown) => {
       console.error('Failed to save plan:', error);
-      showToast(error.response?.data?.error || 'Failed to update plan', 'error');
+      const serverMessage = isAxiosError<{ error?: string; message?: string }>(error)
+        ? error.response?.data?.error || error.response?.data?.message
+        : undefined;
+      showToast(serverMessage || 'Failed to update plan', 'error');
     }
   });
 
-  const handleSavePlan = async (payload: { id: string; data: any }) => {
-    return updateMutation.mutateAsync(payload);
+  const handleSavePlan = async (payload: PlanUpdatePayload): Promise<void> => {
+    await updateMutation.mutateAsync(payload);
   };
 
   return (
@@ -90,7 +69,7 @@ const Subscriptions = () => {
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         {isLoading ? (
           <div className="col-span-3 text-center py-10 text-gray-400">Loading plans...</div>
-        ) : plans.map((plan: any) => (
+        ) : plans.map((plan) => (
           <PricingCard
             key={plan.id}
             planName={plan.name}

@@ -1,5 +1,16 @@
 import React from 'react';
 import { X, UserPlus } from 'lucide-react';
+import Decimal from 'decimal.js';
+import { formatMoney } from '../utils/money';
+
+/** Flat per-employee amount this modal has always used for its monthly bill estimate. */
+const MONTHLY_PRICE_PER_EMPLOYEE = new Decimal(100);
+
+interface CompanySummary {
+    id: string;
+    name: string;
+    employeeCount: number;
+}
 
 interface UserDetailsModalProps {
     isOpen: boolean;
@@ -15,7 +26,11 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
     if (!isOpen || !userData) return null;
 
     const { user, currentSubscription, companies, stats } = userData;
-    const monthlyBill = (companies ?? []).reduce((sum: number, company: any) => sum + (company.employeeCount ?? 0) * 100, 0);
+    const monthlyBill = ((companies ?? []) as CompanySummary[]).reduce(
+        (sum: Decimal, company: CompanySummary): Decimal =>
+            sum.plus(MONTHLY_PRICE_PER_EMPLOYEE.times(company.employeeCount ?? 0)),
+        new Decimal(0)
+    );
     const initials = user.fullName?.split(' ').map((n: string) => n[0]).join('').toUpperCase() || '??';
 
     const formatDate = (dateString: string | null) => {
@@ -112,7 +127,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                             <div className="flex-1 bg-gray-50/30 border border-gray-100 rounded-2xl overflow-hidden flex flex-col">
                                 <div className="flex-1 overflow-y-auto">
                                     {companies && companies.length > 0 ? (
-                                        companies.map((company: any, index: number) => (
+                                        companies.map((company: CompanySummary, index: number) => (
                                             <div
                                                 key={company.id}
                                                 className={`px-6 py-4 flex items-center justify-between hover:bg-white transition-colors ${index !== companies.length - 1 ? 'border-b border-gray-50' : ''
@@ -144,7 +159,7 @@ const UserDetailsModal: React.FC<UserDetailsModalProps> = ({
                         <div className="mb-4 md:mb-0">
                             <p className="text-blue-600 font-semibold mb-1">Monthly Bill:</p>
                             <div className="flex items-baseline space-x-2">
-                                <span className="text-3xl font-extrabold text-blue-700">RS: {monthlyBill.toLocaleString('en-US', { minimumFractionDigits: 2 })}</span>
+                                <span className="text-3xl font-extrabold text-blue-700">RS: {formatMoney(monthlyBill)}</span>
                             </div>
                         </div>
                         <div className="text-right">

@@ -1,81 +1,58 @@
-import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
+import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
+import { isAxiosError } from 'axios';
 import api from '../utils/axios';
-
-interface SubscriptionFeature {
-  text: string;
-  included: boolean;
-}
-
-interface SubscriptionPlan {
-  id: string;
-  name: string;
-  price: number;
-  priceLabel: string;
-  registrationFee: number;
-  maxEmployees: number;
-  features: SubscriptionFeature[];
-}
+import { toPlanView } from '../utils/planView';
+import type { Plan, PlanUpdatePayload, SubscriptionPlanView } from '../types';
+import type { ApiEnvelope } from '../auth/authTypes';
 
 interface SubscriptionState {
-  plans: SubscriptionPlan[];
+  plans: SubscriptionPlanView[];
   isLoading: boolean;
   error: string | null;
-  additionalSlotPrice: number;
+  /** Decimal string (money). */
+  additionalSlotPrice: string;
 }
-
-// Hardcoded features as requested
-export const getHardcodedFeatures = (planName: string): SubscriptionFeature[] => {
-  const commonFeatures = [
-    { text: 'Automatic salary & deduction calculations', included: true },
-    { text: 'Monthly payslip generation (PDF / CSV / Excel', included: true },
-    { text: 'Employee profile management', included: true },
-    { text: 'Manage multiple company', included: true },
-    { text: 'Payroll report generations', included: true },
-    { text: 'Secure dashboard for administrators', included: true },
-  ];
-
-  if (planName.toUpperCase().includes('BASIC')) {
-    return [{ text: 'Payroll processing for unlimited employees', included: true }, ...commonFeatures];
-  } else if (planName.toUpperCase().includes('PROFESSIONAL')) {
-    return [{ text: 'Payroll processing for 30 - 99 employees', included: true }, ...commonFeatures];
-  } else {
-    return [{ text: 'Payroll processing for 100 or more employees', included: true }, ...commonFeatures];
-  }
-};
 
 const initialState: SubscriptionState = {
   plans: [],
   isLoading: false,
   error: null,
-  additionalSlotPrice: 150,
+  additionalSlotPrice: '150',
 };
 
-export const fetchPlans = createAsyncThunk(
+function extractErrorMessage(err: unknown, fallback: string): string {
+  if (isAxiosError<{ error?: string }>(err)) {
+    return err.response?.data?.error || fallback;
+  }
+  return fallback;
+}
+
+export const fetchPlans = createAsyncThunk<Plan[], void, { rejectValue: string }>(
   'subscription/fetchPlans',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await api.get('/admin/plans');
+      const response = await api.get<ApiEnvelope<Plan[]>>('/admin/plans');
       if (response.data.success) {
         return response.data.data;
       }
       return rejectWithValue('Failed to fetch plans');
-    } catch (err: any) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to fetch plans');
+    } catch (err: unknown) {
+      return rejectWithValue(extractErrorMessage(err, 'Failed to fetch plans'));
     }
   }
 );
 
-export const updatePlanData = createAsyncThunk(
+export const updatePlanData = createAsyncThunk<Plan, PlanUpdatePayload, { rejectValue: string }>(
   'subscription/updatePlan',
-  async ({ id, data }: { id: string; data: any }, { rejectWithValue }) => {
+  async ({ id, data }, { rejectWithValue }) => {
     try {
-      const response = await api.put(`/admin/plans/${id}`, data);
+      const response = await api.put<ApiEnvelope<Plan>>(`/admin/plans/${encodeURIComponent(id)}`, data);
       if (response.data.success) {
         return response.data.data;
       }
       return rejectWithValue('Failed to update plan');
-    } catch (err: any) {
-      return rejectWithValue(err.response?.data?.error || 'Failed to update plan');
+    } catch (err: unknown) {
+      return rejectWithValue(extractErrorMessage(err, 'Failed to update plan'));
     }
   }
 );
@@ -94,34 +71,18 @@ const subscriptionSlice = createSlice({
         state.isLoading = true;
         state.error = null;
       })
-      .addCase(fetchPlans.fulfilled, (state, action: PayloadAction<any[]>) => {
+      .addCase(fetchPlans.fulfilled, (state, action) => {
         state.isLoading = false;
-        state.plans = action.payload.map(plan => ({
-          id: plan.id,
-          name: plan.name,
-          price: plan.employeePrice,
-          priceLabel: 'Per employee',
-          registrationFee: plan.registrationFee,
-          maxEmployees: plan.maxEmployees,
-          features: getHardcodedFeatures(plan.name),
-        }));
+        state.plans = action.payload.map(toPlanView);
       })
-      .addCase(fetchPlans.rejected, (state, action: PayloadAction<any>) => {
+      .addCase(fetchPlans.rejected, (state, action) => {
         state.isLoading = false;
-        state.error = action.payload;
+        state.error = action.payload ?? 'Failed to fetch plans';
       })
-      .addCase(updatePlanData.fulfilled, (state, action: PayloadAction<any>) => {
+      .addCase(updatePlanData.fulfilled, (state, action) => {
         const index = state.plans.findIndex(p => p.id === action.payload.id);
         if (index !== -1) {
-          state.plans[index] = {
-            id: action.payload.id,
-            name: action.payload.name,
-            price: action.payload.employeePrice,
-            priceLabel: 'Per employee',
-            registrationFee: action.payload.registrationFee,
-            maxEmployees: action.payload.maxEmployees,
-            features: getHardcodedFeatures(action.payload.name),
-          };
+          state.plans[index] = toPlanView(action.payload);
         }
       });
   },

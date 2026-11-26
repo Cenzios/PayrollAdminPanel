@@ -1,13 +1,26 @@
 import React, { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useToast } from './ToastContext';
+import { parseMoneyInput, toDecimal } from '../utils/money';
+import type { PlanUpdatePayload, SubscriptionPlanView } from '../types';
 
 interface EditPlanModalProps {
     isOpen: boolean;
     onClose: () => void;
-    onSave: (data: any) => Promise<void>;
-    plan: any;
+    onSave: (payload: PlanUpdatePayload) => Promise<void>;
+    plan: SubscriptionPlanView | null;
 }
+
+interface PlanFormData {
+    name: string;
+    /** Money inputs are kept as the raw typed string, never as a float. */
+    employeePrice: string;
+    registrationFee: string;
+    maxEmployees: number;
+    additionalSlotPrice: string;
+}
+
+type MoneyField = 'employeePrice' | 'registrationFee';
 
 const EditPlanModal: React.FC<EditPlanModalProps> = ({
     isOpen,
@@ -16,12 +29,12 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
     plan,
 }) => {
     const { showToast } = useToast();
-    const [formData, setFormData] = useState({
+    const [formData, setFormData] = useState<PlanFormData>({
         name: '',
-        employeePrice: 0,
-        registrationFee: 0,
+        employeePrice: '0',
+        registrationFee: '0',
         maxEmployees: 0,
-        additionalSlotPrice: 150, // Default or from slice
+        additionalSlotPrice: '150', // Default or from slice
     });
 
     const [isSaving, setIsSaving] = useState(false);
@@ -40,10 +53,10 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
         if (plan) {
             setFormData({
                 name: plan.name || '',
-                employeePrice: plan.price || 0,
-                registrationFee: plan.registrationFee || 0,
+                employeePrice: toDecimal(plan.price).toFixed(2),
+                registrationFee: toDecimal(plan.registrationFee).toFixed(2),
                 maxEmployees: plan.maxEmployees || 0,
-                additionalSlotPrice: 150,
+                additionalSlotPrice: '150',
             });
         }
     }, [plan]);
@@ -52,7 +65,7 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
 
     const isFreeTrial = plan.name?.toLowerCase().includes('free trial');
 
-    const handleSubmit = async (e: React.FormEvent) => {
+    const handleSubmit = async (e: React.FormEvent): Promise<void> => {
         e.preventDefault();
 
         // Validation
@@ -61,8 +74,15 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
             return;
         }
 
-        if (formData.employeePrice < 0 || formData.registrationFee < 0 || formData.maxEmployees < 0) {
+        if (formData.maxEmployees < 0) {
             showToast('Values cannot be negative', 'warning');
+            return;
+        }
+
+        const employeePrice = parseMoneyInput(formData.employeePrice);
+        const registrationFee = parseMoneyInput(formData.registrationFee);
+        if (employeePrice === null || registrationFee === null) {
+            showToast('Prices must be non-negative amounts with up to 2 decimals', 'warning');
             return;
         }
 
@@ -72,8 +92,8 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
                 id: plan.id,
                 data: {
                     name: formData.name,
-                    employeePrice: formData.employeePrice,
-                    registrationFee: formData.registrationFee,
+                    employeePrice,
+                    registrationFee,
                     maxEmployees: formData.maxEmployees,
                 },
             });
@@ -85,9 +105,13 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
         }
     };
 
-    const handleNumberChange = (field: string, value: string) => {
+    const handleNumberChange = (field: 'maxEmployees', value: string): void => {
         const num = parseInt(value) || 0;
         setFormData(prev => ({ ...prev, [field]: num }));
+    };
+
+    const handleMoneyChange = (field: MoneyField, value: string): void => {
+        setFormData(prev => ({ ...prev, [field]: value }));
     };
 
     return (
@@ -121,8 +145,11 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
                                 <div className="relative group">
                                     <input
                                         type="number"
+                                        min="0"
+                                        step="0.01"
+                                        inputMode="decimal"
                                         value={formData.employeePrice}
-                                        onChange={(e) => handleNumberChange('employeePrice', e.target.value)}
+                                        onChange={(e) => handleMoneyChange('employeePrice', e.target.value)}
                                         onWheel={(e) => e.currentTarget.blur()}
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-800"
                                     />
@@ -139,8 +166,11 @@ const EditPlanModal: React.FC<EditPlanModalProps> = ({
                                 <div className="relative group">
                                     <input
                                         type="number"
+                                        min="0"
+                                        step="0.01"
+                                        inputMode="decimal"
                                         value={formData.registrationFee}
-                                        onChange={(e) => handleNumberChange('registrationFee', e.target.value)}
+                                        onChange={(e) => handleMoneyChange('registrationFee', e.target.value)}
                                         onWheel={(e) => e.currentTarget.blur()}
                                         className="w-full px-4 py-3 bg-white border border-gray-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-blue-500 transition-all font-medium text-gray-800"
                                     />

@@ -5,6 +5,8 @@ import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../utils/axios';
 import { DollarSign, CreditCard, Receipt, AlertCircle, Search, Calendar, ArrowRight, Download, Mail, Target } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
+import { formatMoney, percentOf } from '../utils/money';
+import type { InvoiceRow, RevenueSummary } from '../types';
 
 const FinancialAnalytics = () => {
     const dispatch = useAppDispatch();
@@ -24,15 +26,15 @@ const FinancialAnalytics = () => {
 
     const { data: statsData, isLoading: isStatsLoading } = useQuery({
         queryKey: ['financialStats'],
-        queryFn: async () => {
+        queryFn: async (): Promise<RevenueSummary> => {
             const response = await api.get('/admin/revenue/summary');
             return response.data.data;
         },
     });
 
-    const { data: overdueData, isLoading: isOverdueLoading } = useQuery({
+    const { data: overdueData = [], isLoading: isOverdueLoading } = useQuery({
         queryKey: ['overdueInvoices'],
-        queryFn: async () => {
+        queryFn: async (): Promise<InvoiceRow[]> => {
             const response = await api.get('/admin/revenue/invoices', {
                 params: { status: 'OVERDUE', limit: 5 }
             });
@@ -40,9 +42,9 @@ const FinancialAnalytics = () => {
         },
     });
 
-    const { data: searchResults, isLoading: isSearching } = useQuery({
+    const { data: searchResults = [], isLoading: isSearching } = useQuery({
         queryKey: ['userInvoices', debouncedSearch],
-        queryFn: async () => {
+        queryFn: async (): Promise<InvoiceRow[]> => {
             const response = await api.get('/admin/revenue/invoices', {
                 params: { search: debouncedSearch, limit: 10 }
             });
@@ -93,8 +95,8 @@ const FinancialAnalytics = () => {
         );
     }
 
-    const onlinePercent = statsData?.totalRevenue > 0 ? (statsData.onlineRevenue / statsData.totalRevenue) * 100 : 0;
-    const manualPercent = statsData?.totalRevenue > 0 ? (statsData.manualRevenue / statsData.totalRevenue) * 100 : 0;
+    const onlinePercent = percentOf(statsData?.onlineRevenue, statsData?.totalRevenue);
+    const manualPercent = percentOf(statsData?.manualRevenue, statsData?.totalRevenue);
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700 pb-10">
@@ -102,7 +104,7 @@ const FinancialAnalytics = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
                 <StatsCard
                     title="TOTAL REVENUE"
-                    value={`Rs ${statsData?.totalRevenue?.toLocaleString() || 0}`}
+                    value={`Rs ${formatMoney(statsData?.totalRevenue)}`}
                     icon={DollarSign}
                     iconBgColor="bg-blue-50"
                     iconColor="text-blue-600"
@@ -110,7 +112,7 @@ const FinancialAnalytics = () => {
                 />
                 <StatsCard
                     title="ONLINE REVENUE"
-                    value={`Rs ${statsData?.onlineRevenue?.toLocaleString() || 0}`}
+                    value={`Rs ${formatMoney(statsData?.onlineRevenue)}`}
                     icon={CreditCard}
                     iconBgColor="bg-indigo-50"
                     iconColor="text-indigo-600"
@@ -118,7 +120,7 @@ const FinancialAnalytics = () => {
                 />
                 <StatsCard
                     title="MANUAL REVENUE"
-                    value={`Rs ${statsData?.manualRevenue?.toLocaleString() || 0}`}
+                    value={`Rs ${formatMoney(statsData?.manualRevenue)}`}
                     icon={Receipt}
                     iconBgColor="bg-amber-50"
                     iconColor="text-amber-600"
@@ -146,8 +148,8 @@ const FinancialAnalytics = () => {
                     <div className="flex-1 overflow-y-auto max-h-[400px] overscroll-contain">
                         {isOverdueLoading ? (
                             <div className="p-10 text-center text-gray-400">Loading...</div>
-                        ) : overdueData?.length > 0 ? (
-                            overdueData.map((invoice: any, index: number) => (
+                        ) : overdueData.length > 0 ? (
+                            overdueData.map((invoice, index) => (
                                 <div key={invoice.id} className={`p-5 flex items-center justify-between hover:bg-gray-50 transition-colors ${index !== overdueData.length - 1 ? 'border-b border-gray-50' : ''}`}>
                                     <div className="flex items-center space-x-4">
                                         <div className="w-10 h-10 rounded-xl bg-blue-50 flex items-center justify-center text-blue-600 font-bold text-sm">
@@ -159,7 +161,7 @@ const FinancialAnalytics = () => {
                                         </div>
                                     </div>
                                     <div className="text-right">
-                                        <p className="text-sm font-black text-red-600">LKR {invoice.totalAmount.toLocaleString()}</p>
+                                        <p className="text-sm font-black text-red-600">LKR {formatMoney(invoice.totalAmount)}</p>
                                         <button
                                             onClick={() => remindMutation.mutate(invoice.id)}
                                             disabled={remindStatus[invoice.id] === 'loading' || remindStatus[invoice.id] === 'sent'}
@@ -223,9 +225,9 @@ const FinancialAnalytics = () => {
                                 <h4 className="text-base font-bold text-gray-800 mb-2">History Lookup</h4>
                                 <p className="text-sm text-gray-400 max-w-[280px]">Type at least 3 characters to search for a user's payment history and billing timeline.</p>
                             </div>
-                        ) : searchResults?.length > 0 ? (
+                        ) : searchResults.length > 0 ? (
                             <div className="p-4 space-y-4">
-                                {searchResults.map((inv: any) => (
+                                {searchResults.map((inv) => (
                                     <div key={inv.id} className="p-4 rounded-2xl border border-gray-50 bg-gray-50/30 flex items-center justify-between group hover:border-blue-100 hover:bg-blue-50/20 transition-all">
                                         <div className="flex items-center gap-4">
                                             <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${inv.status === 'PAID' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
@@ -243,7 +245,7 @@ const FinancialAnalytics = () => {
                                         </div>
                                         <div className="text-right flex items-center gap-4">
                                             <div className="hidden sm:block">
-                                                <p className="text-sm font-black text-gray-900">LKR {inv.totalAmount.toLocaleString()}</p>
+                                                <p className="text-sm font-black text-gray-900">LKR {formatMoney(inv.totalAmount)}</p>
                                                 <p className="text-[10px] text-gray-400 font-medium uppercase mt-0.5">{new Date(inv.createdAt).toLocaleDateString()}</p>
                                             </div>
                                             {/* <button className="w-8 h-8 rounded-lg bg-white border border-gray-100 flex items-center justify-center text-gray-400 opacity-0 group-hover:opacity-100 transition-opacity">
