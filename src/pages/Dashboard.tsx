@@ -232,10 +232,10 @@ const Dashboard = () => {
                       <Icon className="text-blue-600" size={18} />
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div
-                        className="text-sm font-medium text-gray-900 leading-snug"
-                        dangerouslySetInnerHTML={{ __html: getActivityDescription(activity) }}
-                      />
+                      {/* Plain text: userName is user-controlled, never render it as HTML */}
+                      <div className="text-sm font-medium text-gray-900 leading-snug">
+                        {getActivityDescription(activity)}
+                      </div>
                       <p className="text-xs text-gray-400 mt-1">{formatTime(activity.createdAt)}</p>
                     </div>
                   </div>
