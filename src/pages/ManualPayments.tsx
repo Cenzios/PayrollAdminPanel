@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { isAxiosError } from 'axios';
 import api from '../utils/axios';
 import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
@@ -11,6 +10,9 @@ import 'react-pdf/dist/Page/TextLayer.css';
 import { useToast } from '../components/ToastContext';
 import { createPortal } from 'react-dom';
 import { formatPageRange } from '../utils/pagination';
+import { getApiErrorMessage } from '../utils/apiError';
+import { formatMoney } from '../utils/money';
+import ConfirmModal from '../components/ConfirmModal';
 
 pdfjs.GlobalWorkerOptions.workerSrc = `//unpkg.com/pdfjs-dist@${pdfjs.version}/build/pdf.worker.min.mjs`;
 
@@ -20,17 +22,60 @@ interface User {
     email: string;
 }
 
+/** The invoice an approval would settle (pending proofs only). Money is a decimal string. */
+interface TargetInvoice {
+    id: string;
+    billingType: string;
+    billingMonth: string;
+    totalAmount: string;
+}
+
 interface UserDocument {
     id: string;
     userId: string;
     fileName: string;
     fileUrl: string;
     status: string;
+    referenceId?: string | null;
     createdAt: string;
     user: User;
+    targetInvoice?: TargetInvoice | null;
 }
 
-type TabType = 'PENDING' | 'APPROVED';
+type TabType = 'PENDING' | 'APPROVED' | 'REJECTED';
+
+const TABS: readonly { value: TabType; label: string }[] = [
+    { value: 'PENDING', label: 'Pending Reviews' },
+    { value: 'APPROVED', label: 'Approved History' },
+    { value: 'REJECTED', label: 'Rejected' },
+];
+
+const STATUS_BADGE: Record<TabType, string> = {
+    PENDING: 'bg-orange-50 text-orange-600 border-orange-100',
+    APPROVED: 'bg-green-50 text-green-600 border-green-100',
+    REJECTED: 'bg-red-50 text-red-600 border-red-100',
+};
+
+const isTabType = (value: string | null): value is TabType =>
+    value === 'PENDING' || value === 'APPROVED' || value === 'REJECTED';
+
+interface PendingDecision {
+    action: 'approve' | 'reject';
+    doc: UserDocument;
+}
+
+function describeDecision(decision: PendingDecision): string {
+    const who = decision.doc.user.fullName || decision.doc.user.email;
+    if (decision.action === 'reject') {
+        return `Reject the bank slip from ${who}? The customer is emailed and has to upload a new proof. This cannot be undone.`;
+    }
+    const invoice = decision.doc.targetInvoice;
+    if (!invoice) {
+        return `Approve the bank slip from ${who}? This customer has no open invoice, so the approval will be refused.`;
+    }
+    return `Approve the bank slip from ${who}? It settles only the ${invoice.billingType.toLowerCase()} invoice for ${invoice.billingMonth} `
+        + `(Rs ${formatMoney(invoice.totalAmount)}). Check that the slip shows this amount.`;
+}
 
 const SESSION_KEY = 'manualPayments_activeTab';
 
@@ -40,8 +85,9 @@ export default function ManualPayments() {
     const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<TabType>(() => {
         const saved = sessionStorage.getItem(SESSION_KEY);
-        return (saved === 'PENDING' || saved === 'APPROVED') ? saved : 'PENDING';
+        return isTabType(saved) ? saved : 'PENDING';
     });
+    const [decision, setDecision] = useState<PendingDecision | null>(null);
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedImageUrl, setSelectedImageUrl] = useState<string | null>(null);
     const [selectedFileName, setSelectedFileName] = useState<string>('');
@@ -76,19 +122,13 @@ export default function ManualPayments() {
         },
         onSuccess: () => {
             showToast('Payment approved successfully!', 'success');
-            queryClient.invalidateQueries({ queryKey: ['manual-payments', 'PENDING'] });
-            queryClient.invalidateQueries({ queryKey: ['manual-payments', 'APPROVED'] });
-            setActiveMenuId(null);
-            setMenuPosition(null);
+            queryClient.invalidateQueries({ queryKey: ['manual-payments'] });
         },
         onError: (error: unknown) => {
-            showToast(
-                (isAxiosError<{ message?: string }>(error) && error.response?.data?.message) || 'Failed to approve payment',
-                'error'
-            );
-            setActiveMenuId(null);
-            setMenuPosition(null);
-        }
+            showToast(getApiErrorMessage(error, 'Failed to approve payment'), 'error');
+            queryClient.invalidateQueries({ queryKey: ['manual-payments'] });
+        },
+        onSettled: () => setDecision(null),
     });
 
     const rejectMutation = useMutation({
@@ -96,20 +136,28 @@ export default function ManualPayments() {
             await api.post(`/admin/manual-payments/${encodeURIComponent(id)}/reject`);
         },
         onSuccess: () => {
-            showToast('⚠️ Payment rejected successfully!', 'success');
-            queryClient.invalidateQueries({ queryKey: ['manual-payments', 'PENDING'] });
-            setActiveMenuId(null);
-            setMenuPosition(null);
+            showToast('Payment rejected', 'success');
+            queryClient.invalidateQueries({ queryKey: ['manual-payments'] });
         },
         onError: (error: unknown) => {
-            showToast(
-                (isAxiosError<{ message?: string }>(error) && error.response?.data?.message) || 'Failed to reject payment',
-                'error'
-            );
-            setActiveMenuId(null);
-            setMenuPosition(null);
-        }
+            showToast(getApiErrorMessage(error, 'Failed to reject payment'), 'error');
+            queryClient.invalidateQueries({ queryKey: ['manual-payments'] });
+        },
+        onSettled: () => setDecision(null),
     });
+
+    /** Opens the in-page confirmation; nothing is sent until the admin confirms. */
+    const askToDecide = (action: PendingDecision['action'], doc: UserDocument): void => {
+        setActiveMenuId(null);
+        setMenuPosition(null);
+        setDecision({ action, doc });
+    };
+
+    const handleConfirmDecision = (): void => {
+        if (!decision || approveMutation.isPending || rejectMutation.isPending) return;
+        if (decision.action === 'approve') approveMutation.mutate(decision.doc.id);
+        else rejectMutation.mutate(decision.doc.id);
+    };
 
     // fileUrl is a public third-party (Cloudinary) URL: never attach the admin access token to it.
     const loadPdfAsBlob = async (url: string): Promise<void> => {
@@ -162,25 +210,22 @@ export default function ManualPayments() {
         <div className="flex flex-col h-full space-y-2 p-2 bg-gray-50">
             {/* Tabs */}
             <div className="flex bg-white rounded-xl shadow-sm border border-gray-100 w-fit shrink-0">
-                <button
-                    onClick={() => { setActiveTab('PENDING'); setCurrentPage(1); }}
-                    className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'PENDING' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
-                >
-                    Pending Reviews
-                </button>
-                <button
-                    onClick={() => { setActiveTab('APPROVED'); setCurrentPage(1); }}
-                    className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === 'APPROVED' ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
-                >
-                    Approved History
-                </button>
+                {TABS.map((tab) => (
+                    <button
+                        key={tab.value}
+                        onClick={() => { setActiveTab(tab.value); setCurrentPage(1); }}
+                        className={`px-6 py-2 text-sm font-semibold rounded-lg transition-all ${activeTab === tab.value ? 'bg-blue-600 text-white shadow-md' : 'text-gray-500 hover:text-gray-700 hover:bg-gray-100'}`}
+                    >
+                        {tab.label}
+                    </button>
+                ))}
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm flex flex-col flex-1 min-h-0">
                 <div className="p-6 flex flex-col md:flex-row md:items-center justify-between gap-4 border-b border-gray-50 shrink-0">
                     <div className="flex items-center space-x-2">
                         <h2 className="text-lg font-semibold text-gray-800">
-                            {activeTab === 'PENDING' ? 'Pending Payments' : 'Payment History'}
+                            {activeTab === 'PENDING' ? 'Pending Payments' : activeTab === 'APPROVED' ? 'Payment History' : 'Rejected Payments'}
                         </h2>
                         <span className="bg-gray-100 text-gray-600 text-xs font-medium px-2.5 py-0.5 rounded-full">
                             {filteredDocuments.length} records
@@ -267,8 +312,7 @@ export default function ManualPayments() {
                                             </button>
                                         </td>
                                         <td className="px-6 py-4 text-center">
-                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${activeTab === 'PENDING' ? 'bg-orange-50 text-orange-600 border-orange-100' : 'bg-green-50 text-green-600 border-green-100'
-                                                }`}>
+                                            <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border ${STATUS_BADGE[activeTab]}`}>
                                                 {doc.status}
                                             </span>
                                         </td>
@@ -301,9 +345,7 @@ export default function ManualPayments() {
                                                         {activeTab === 'PENDING' ? (
                                                             <>
                                                                 <button
-                                                                    onClick={() => {
-                                                                        approveMutation.mutate(doc.id);
-                                                                    }}
+                                                                    onClick={() => askToDecide('approve', doc)}
                                                                     disabled={approveMutation.isPending}
                                                                     className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 
                                                                         ${approveMutation.isPending 
@@ -323,9 +365,7 @@ export default function ManualPayments() {
                                                                     )}
                                                                 </button>
                                                                 <button
-                                                                    onClick={() => {
-                                                                        rejectMutation.mutate(doc.id);
-                                                                    }}
+                                                                    onClick={() => askToDecide('reject', doc)}
                                                                     disabled={rejectMutation.isPending}
                                                                     className={`w-full text-left px-4 py-2 text-sm flex items-center gap-2 
                                                                         ${rejectMutation.isPending 
@@ -457,6 +497,19 @@ export default function ManualPayments() {
                     </div>
                 </div>
             )}
+
+            <ConfirmModal
+                isOpen={decision !== null}
+                title={decision?.action === 'reject' ? 'Reject bank slip' : 'Approve bank slip'}
+                message={decision ? describeDecision(decision) : ''}
+                confirmLabel={decision?.action === 'reject'
+                    ? (rejectMutation.isPending ? 'Rejecting…' : 'Reject')
+                    : (approveMutation.isPending ? 'Approving…' : 'Approve')}
+                cancelLabel="Cancel"
+                confirmTone={decision?.action === 'reject' ? 'danger' : 'primary'}
+                onConfirm={handleConfirmDecision}
+                onCancel={() => { if (!approveMutation.isPending && !rejectMutation.isPending) setDecision(null); }}
+            />
 
             {/* Click outside to close menu backdrop */}
             {activeMenuId && (
