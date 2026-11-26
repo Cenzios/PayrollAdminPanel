@@ -41,6 +41,8 @@ interface DashboardSummary extends Partial<DashboardStats> {
 interface RecentActivity {
   id: string;
   action: string;
+  /** Specific label for admin actions, e.g. "Approved payment for Jane Doe" (null for customer activity). */
+  description?: string | null;
   userName: string;
   createdAt: string;
   resourceType?: string;
@@ -151,6 +153,7 @@ const Dashboard = () => {
   };
 
   const getActivityDescription = (activity: RecentActivity): string => {
+    if (activity.description) return activity.description;
     switch (activity.action) {
       case 'CREATE_USER':
         return `New User Registered by ${activity.userName}`;
@@ -169,6 +172,7 @@ const Dashboard = () => {
   };
 
   const getActivityIcon = (action: string) => {
+    if (action.includes('PAYMENT')) return DollarSign;
     if (action.includes('USER')) return Users;
     if (action.includes('COMPANY')) return Building2;
     if (action.includes('EMPLOYEE')) return Users;
@@ -243,7 +247,10 @@ const Dashboard = () => {
                       <div className="text-sm font-medium text-gray-900 leading-snug">
                         {getActivityDescription(activity)}
                       </div>
-                      <p className="text-xs text-gray-400 mt-1">{formatTime(activity.createdAt)}</p>
+                      <p className="text-xs text-gray-400 mt-1">
+                        {formatTime(activity.createdAt)}
+                        {activity.description ? ` · by ${activity.userName}` : ''}
+                      </p>
                     </div>
                   </div>
                 );
