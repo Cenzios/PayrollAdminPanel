@@ -3,9 +3,10 @@ import { useAppDispatch } from '../store/hooks';
 import { setPageTitle } from '../store/uiSlice';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import api from '../utils/axios';
-import { DollarSign, CreditCard, Receipt, AlertCircle, Search, Calendar, ArrowRight, Download, Mail, Target } from 'lucide-react';
+import { DollarSign, CreditCard, Receipt, AlertCircle, Ban, Search, Calendar, ArrowRight, Download, Mail, Target } from 'lucide-react';
 import StatsCard from '../components/StatsCard';
 import { formatMoney, percentOf } from '../utils/money';
+import { invoiceStatusLabel, invoiceStatusStyle } from '../utils/invoiceStatus';
 import type { InvoiceRow, RevenueSummary } from '../types';
 
 const FinancialAnalytics = () => {
@@ -230,14 +231,14 @@ const FinancialAnalytics = () => {
                                 {searchResults.map((inv) => (
                                     <div key={inv.id} className="p-4 rounded-2xl border border-gray-50 bg-gray-50/30 flex items-center justify-between group hover:border-blue-100 hover:bg-blue-50/20 transition-all">
                                         <div className="flex items-center gap-4">
-                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${inv.status === 'PAID' ? 'bg-green-50 text-green-600' : 'bg-red-50 text-red-600'}`}>
-                                                {inv.status === 'PAID' ? <DollarSign size={20} /> : <AlertCircle size={20} />}
+                                            <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${inv.status === 'PAID' ? 'bg-green-50 text-green-600' : inv.status === 'VOID' ? 'bg-gray-100 text-gray-400' : 'bg-red-50 text-red-600'}`}>
+                                                {inv.status === 'PAID' ? <DollarSign size={20} /> : inv.status === 'VOID' ? <Ban size={20} /> : <AlertCircle size={20} />}
                                             </div>
                                             <div>
                                                 <div className="flex items-center gap-2">
                                                     <span className="text-sm font-bold text-gray-900">{inv.billingMonth}</span>
-                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded uppercase ${inv.status === 'PAID' ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'}`}>
-                                                        {inv.status}
+                                                    <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded border ${invoiceStatusStyle(inv.status)}`}>
+                                                        {invoiceStatusLabel(inv.status)}
                                                     </span>
                                                 </div>
                                                 <p className="text-xs text-gray-500 font-medium">{inv.user.fullName} • {inv.billingType}</p>

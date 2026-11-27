@@ -1,6 +1,7 @@
 import React from 'react';
 import { X, UserPlus } from 'lucide-react';
 import { formatMoney } from '../utils/money';
+import { invoiceStatusLabel, invoiceStatusStyle } from '../utils/invoiceStatus';
 import type { UserDetails } from '../types';
 
 type CompanySummary = UserDetails['companies'][number];
@@ -11,13 +12,6 @@ interface UserDetailsModalProps {
     onClose: () => void;
     userData: UserDetails | undefined;
 }
-
-const INVOICE_STATUS_STYLES: Record<string, string> = {
-    PAID: 'bg-green-50 text-green-600 border-green-100',
-    PENDING: 'bg-orange-50 text-orange-600 border-orange-100',
-    OVERDUE: 'bg-red-50 text-red-600 border-red-100',
-    FAILED: 'bg-red-50 text-red-600 border-red-100',
-};
 
 const InvoiceHistory = ({ invoices }: { invoices: InvoiceSummary[] }): JSX.Element => (
     <div className="mt-8">
@@ -45,8 +39,8 @@ const InvoiceHistory = ({ invoices }: { invoices: InvoiceSummary[] }): JSX.Eleme
                                 <td className="px-5 py-3 text-gray-600 capitalize">{invoice.type.toLowerCase()}</td>
                                 <td className="px-5 py-3 text-right font-semibold text-gray-800 tabular-nums">Rs {formatMoney(invoice.amount)}</td>
                                 <td className="px-5 py-3 text-center">
-                                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border ${INVOICE_STATUS_STYLES[invoice.status] ?? 'bg-gray-50 text-gray-600 border-gray-100'}`}>
-                                        {invoice.status}
+                                    <span className={`inline-flex px-2.5 py-0.5 rounded-full text-xs font-medium border ${invoiceStatusStyle(invoice.status)}`}>
+                                        {invoiceStatusLabel(invoice.status)}
                                     </span>
                                 </td>
                             </tr>
